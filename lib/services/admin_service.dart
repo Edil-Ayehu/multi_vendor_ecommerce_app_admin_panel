@@ -158,4 +158,38 @@ class AdminService {
       print('Error updating order status: $e');
     }
   }
+
+  // Add advertisement
+    // Get all advertisements
+  Stream<QuerySnapshot> getAllAdvertisements() {
+    try {
+      return _firestore
+          .collection('advertisements')
+          .orderBy('createdAt', descending: true)
+          .snapshots();
+    } catch (e) {
+      print('Error getting advertisements: $e');
+      return Stream.empty();
+    }
+  }
+
+  // Toggle advertisement status
+  Future<void> toggleAdvertisementStatus(String adId, bool isActive) async {
+    try {
+      await _firestore.collection('advertisements').doc(adId).update({
+        'isActive': isActive,
+      });
+    } catch (e) {
+      print('Error toggling advertisement status: $e');
+    }
+  }
+
+  // Remove advertisement
+  Future<void> removeAdvertisement(String adId) async {
+    try {
+      await _firestore.collection('advertisements').doc(adId).delete();
+    } catch (e) {
+      print('Error removing advertisement: $e');
+    }
+  }
 }

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_advertisements_screen.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_orders_screen.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_users_screen.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_products_screen.dart';
@@ -270,7 +271,12 @@ class AdminDashboardScreen extends StatelessWidget {
             title: const Text('Advertisements'),
             onTap: () {
               Navigator.pop(context);
-              // Navigate to ads management screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ManageAdvertisementsScreen(),
+                ),
+              );
             },
           ),
           ListTile(
