@@ -16,9 +16,10 @@ class AdminService {
   // Fetch vendors only
   Stream<QuerySnapshot> getVendors() {
     try {
+      print('Fetching vendors...'); // Debug print
       return _firestore
           .collection('users')
-          .where('isVendor', isEqualTo: true)
+          .where('role', isEqualTo: 'vendor') // Changed from isVendor
           .snapshots();
     } catch (e) {
       print('Error getting vendors: $e');
@@ -29,9 +30,10 @@ class AdminService {
   // Fetch customers only
   Stream<QuerySnapshot> getCustomers() {
     try {
+      print('Fetching customers...'); // Debug print
       return _firestore
           .collection('users')
-          .where('isVendor', isEqualTo: false)
+          .where('role', isEqualTo: 'customer') // Changed from isVendor
           .snapshots();
     } catch (e) {
       print('Error getting customers: $e');
