@@ -13,7 +13,7 @@ class ManageAdvertisementsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue,
-        title: const Text('Manage Advertisements', 
+        title: const Text('Manage Advertisements',
             style: TextStyle(color: Colors.white)),
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -38,6 +38,7 @@ class ManageAdvertisementsScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final adData = ads[index].data() as Map<String, dynamic>;
               final createdAt = (adData['createdAt'] as Timestamp).toDate();
+              final expiryDate = (adData['expiryDate'] as Timestamp).toDate();
 
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -50,7 +51,7 @@ class ManageAdvertisementsScreen extends StatelessWidget {
                       height: 200,
                       decoration: BoxDecoration(
                         image: DecorationImage(
-                          image: NetworkImage(adData['imageUrl'] ?? 
+                          image: NetworkImage(adData['imageUrl'] ??
                               'https://via.placeholder.com/400x200'),
                           fit: BoxFit.cover,
                         ),
@@ -71,6 +72,11 @@ class ManageAdvertisementsScreen extends StatelessWidget {
                           const SizedBox(height: 8),
                           Text(adData['description'] ?? 'No Description'),
                           const SizedBox(height: 8),
+                          Text(
+                            'Vendor ID: ${adData['vendorId'] ?? 'N/A'}',
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                          const SizedBox(height: 8),
                           Row(
                             children: [
                               Icon(
@@ -83,7 +89,9 @@ class ManageAdvertisementsScreen extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                adData['isActive'] == true ? 'Active' : 'Inactive',
+                                adData['isActive'] == true
+                                    ? 'Active'
+                                    : 'Inactive',
                                 style: TextStyle(
                                   color: adData['isActive'] == true
                                       ? Colors.green
@@ -93,9 +101,25 @@ class ManageAdvertisementsScreen extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Text(
-                            'Created: ${DateFormat('MMM d, yyyy').format(createdAt)}',
-                            style: TextStyle(color: Colors.grey[600]),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Created: ${DateFormat('MMM d, yyyy').format(createdAt)}',
+                                  style: TextStyle(color: Colors.grey[600]),
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  'Expires: ${DateFormat('MMM d, yyyy').format(expiryDate)}',
+                                  style: TextStyle(
+                                    color: expiryDate.isBefore(DateTime.now())
+                                        ? Colors.red
+                                        : Colors.grey[600],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 16),
                           Row(
@@ -112,7 +136,8 @@ class ManageAdvertisementsScreen extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
+                                icon:
+                                    const Icon(Icons.delete, color: Colors.red),
                                 onPressed: () {
                                   showDialog(
                                     context: context,
@@ -122,7 +147,8 @@ class ManageAdvertisementsScreen extends StatelessWidget {
                                           'Are you sure you want to delete this advertisement?'),
                                       actions: [
                                         TextButton(
-                                          onPressed: () => Navigator.pop(context),
+                                          onPressed: () =>
+                                              Navigator.pop(context),
                                           child: const Text('Cancel'),
                                         ),
                                         TextButton(
@@ -132,7 +158,8 @@ class ManageAdvertisementsScreen extends StatelessWidget {
                                             Navigator.pop(context);
                                           },
                                           child: const Text('Delete',
-                                              style: TextStyle(color: Colors.red)),
+                                              style:
+                                                  TextStyle(color: Colors.red)),
                                         ),
                                       ],
                                     ),
