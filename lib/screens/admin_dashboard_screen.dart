@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_orders_screen.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_users_screen.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_products_screen.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/services/admin_service.dart';
@@ -256,7 +257,12 @@ class AdminDashboardScreen extends StatelessWidget {
             title: const Text('Orders'),
             onTap: () {
               Navigator.pop(context);
-              // Navigate to orders management screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ManageOrdersScreen(),
+                ),
+              );
             },
           ),
           ListTile(

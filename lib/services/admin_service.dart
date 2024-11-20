@@ -147,4 +147,15 @@ class AdminService {
       print('Error removing review: $e');
     }
   }
+
+  // Update order status
+    Future<void> updateOrderStatus(String orderId, String status) async {
+    try {
+      await _firestore.collection('orders').doc(orderId).update({
+        'status': status,
+      });
+    } catch (e) {
+      print('Error updating order status: $e');
+    }
+  }
 }
