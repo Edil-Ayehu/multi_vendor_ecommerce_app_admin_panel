@@ -13,7 +13,8 @@ class ManageProductsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue,
-        title: const Text('Manage Products', style: TextStyle(color: Colors.white)),
+        title: const Text('Manage Products',
+            style: TextStyle(color: Colors.white)),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: _adminService.getAllProducts(),
@@ -39,9 +40,11 @@ class ManageProductsScreen extends StatelessWidget {
           return ListView.builder(
             itemCount: products.length,
             itemBuilder: (context, index) {
-              final productData = products[index].data() as Map<String, dynamic>;
-              final createdAt = (productData['createdAt'] as Timestamp?)?.toDate();
-              
+              final productData =
+                  products[index].data() as Map<String, dynamic>;
+              final createdAt =
+                  (productData['createdAt'] as Timestamp?)?.toDate();
+
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: ExpansionTile(
@@ -51,7 +54,9 @@ class ManageProductsScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       image: DecorationImage(
                         image: NetworkImage(
-                          (productData['images'] as List<dynamic>?)?.isNotEmpty == true
+                          (productData['images'] as List<dynamic>?)
+                                      ?.isNotEmpty ==
+                                  true
                               ? productData['images'][0]
                               : 'https://via.placeholder.com/150',
                         ),
@@ -61,7 +66,8 @@ class ManageProductsScreen extends StatelessWidget {
                     ),
                   ),
                   title: Text(productData['name'] ?? 'N/A'),
-                  subtitle: Text('\$${productData['price']?.toStringAsFixed(2) ?? '0.00'}'),
+                  subtitle: Text(
+                      '\$${productData['price']?.toStringAsFixed(2) ?? '0.00'}'),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -72,7 +78,8 @@ class ManageProductsScreen extends StatelessWidget {
                             context: context,
                             builder: (context) => AlertDialog(
                               title: const Text('Delete Product'),
-                              content: const Text('Are you sure you want to delete this product?'),
+                              content: const Text(
+                                  'Are you sure you want to delete this product?'),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(context),
@@ -80,10 +87,12 @@ class ManageProductsScreen extends StatelessWidget {
                                 ),
                                 TextButton(
                                   onPressed: () {
-                                    _adminService.removeProduct(products[index].id);
+                                    _adminService
+                                        .removeProduct(products[index].id);
                                     Navigator.pop(context);
                                   },
-                                  child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                  child: const Text('Delete',
+                                      style: TextStyle(color: Colors.red)),
                                 ),
                               ],
                             ),
@@ -100,37 +109,43 @@ class ManageProductsScreen extends StatelessWidget {
                         children: [
                           Text('Category: ${productData['category'] ?? 'N/A'}'),
                           const SizedBox(height: 8),
-                          Text('Description: ${productData['description'] ?? 'N/A'}'),
+                          Text(
+                              'Description: ${productData['description'] ?? 'N/A'}'),
                           const SizedBox(height: 8),
                           Row(
                             children: [
                               Icon(Icons.star, color: Colors.amber, size: 20),
-                              Text(' ${productData['averageRating']?.toStringAsFixed(1) ?? '0.0'}'),
-                              Text(' (${productData['totalReviews'] ?? 0} reviews)'),
+                              Text(
+                                  ' ${productData['averageRating']?.toStringAsFixed(1) ?? '0.0'}'),
+                              Text(
+                                  ' (${productData['totalReviews'] ?? 0} reviews)'),
                             ],
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Stock: ${productData['stock'] ?? 0}',
                             style: TextStyle(
-                              color: (productData['stock'] ?? 0) > 0 
-                                  ? Colors.green 
+                              color: (productData['stock'] ?? 0) > 0
+                                  ? Colors.green
                                   : Colors.red,
                             ),
                           ),
                           if (createdAt != null) ...[
                             const SizedBox(height: 8),
-                            Text('Created: ${DateFormat('MMM d, yyyy').format(createdAt)}'),
+                            Text(
+                                'Created: ${DateFormat('MMM d, yyyy').format(createdAt)}'),
                           ],
                           const SizedBox(height: 8),
                           if (productData['images'] != null) ...[
-                            const Text('Product Images:', style: TextStyle(fontWeight: FontWeight.bold)),
+                            const Text('Product Images:',
+                                style: TextStyle(fontWeight: FontWeight.bold)),
                             const SizedBox(height: 8),
                             SizedBox(
                               height: 100,
                               child: ListView.builder(
                                 scrollDirection: Axis.horizontal,
-                                itemCount: (productData['images'] as List).length,
+                                itemCount:
+                                    (productData['images'] as List).length,
                                 itemBuilder: (context, imageIndex) {
                                   return Padding(
                                     padding: const EdgeInsets.only(right: 8.0),
@@ -146,6 +161,140 @@ class ManageProductsScreen extends StatelessWidget {
                                   );
                                 },
                               ),
+                            ),
+                          ],
+                          const SizedBox(height: 16),
+                          if (productData['reviews'] != null &&
+                              (productData['reviews'] as List).isNotEmpty) ...[
+                            const Text(
+                              'Customer Reviews:',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount:
+                                  (productData['reviews'] as List).length,
+                              itemBuilder: (context, reviewIndex) {
+                                final review =
+                                    productData['reviews'][reviewIndex];
+                                final reviewDate =
+                                    (review['createdAt'] as Timestamp).toDate();
+
+                                return Card(
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            CircleAvatar(
+                                              backgroundImage: NetworkImage(review[
+                                                      'userImage'] ??
+                                                  'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'),
+                                              radius: 16,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    review['userName'] ??
+                                                        'Anonymous',
+                                                    style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  ),
+                                                  Text(
+                                                    DateFormat('MMM d, yyyy')
+                                                        .format(reviewDate),
+                                                    style: TextStyle(
+                                                      color: Colors.grey[600],
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Row(
+                                              children: [
+                                                const Icon(Icons.star,
+                                                    color: Colors.amber,
+                                                    size: 16),
+                                                Text(
+                                                    ' ${review['rating']?.toStringAsFixed(1) ?? '0.0'}'),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(review['comment'] ?? 'No comment'),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            TextButton(
+                                              onPressed: () {
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) =>
+                                                      AlertDialog(
+                                                    title: const Text(
+                                                        'Delete Review'),
+                                                    content: const Text(
+                                                        'Are you sure you want to delete this review?'),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.pop(
+                                                                context),
+                                                        child: const Text(
+                                                            'Cancel'),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          _adminService
+                                                              .removeProductReview(
+                                                            products[index].id,
+                                                            review['id'],
+                                                          );
+                                                          Navigator.pop(
+                                                              context);
+                                                        },
+                                                        child: const Text(
+                                                          'Delete',
+                                                          style: TextStyle(
+                                                              color:
+                                                                  Colors.red),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                              child: const Text(
+                                                'Delete Review',
+                                                style: TextStyle(
+                                                    color: Colors.red),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ],
                         ],

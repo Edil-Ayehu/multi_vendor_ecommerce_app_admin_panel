@@ -121,4 +121,30 @@ class AdminService {
   Future<void> removeAd(String adId) async {
     await _firestore.collection('advertisements').doc(adId).delete();
   }
+
+  // Remove product review
+    Future<void> removeProductReview(String productId, String reviewId) async {
+    try {
+      final productDoc = await _firestore.collection('products').doc(productId).get();
+      if (!productDoc.exists) return;
+
+      final reviews = List<Map<String, dynamic>>.from(productDoc.data()?['reviews'] ?? []);
+      reviews.removeWhere((review) => review['id'] == reviewId);
+
+      // Recalculate average rating
+      double totalRating = 0;
+      for (var review in reviews) {
+        totalRating += (review['rating'] as num).toDouble();
+      }
+      final averageRating = reviews.isEmpty ? 0.0 : totalRating / reviews.length;
+
+      await _firestore.collection('products').doc(productId).update({
+        'reviews': reviews,
+        'averageRating': averageRating,
+        'totalReviews': reviews.length,
+      });
+    } catch (e) {
+      print('Error removing review: $e');
+    }
+  }
 }
