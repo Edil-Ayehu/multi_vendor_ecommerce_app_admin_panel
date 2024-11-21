@@ -5,6 +5,7 @@ import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_advertisem
 import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_orders_screen.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_users_screen.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_products_screen.dart';
+import 'package:multi_vendor_ecommerce_app_admin_panel/screens/settings_screen.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/services/admin_service.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
@@ -280,26 +281,31 @@ class AdminDashboardScreen extends StatelessWidget {
               );
             },
           ),
-ListTile(
-  leading: const Icon(Icons.analytics),
-  title: const Text('Analytics'),
-  onTap: () {
-    Navigator.pop(context);
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AnalyticsScreen(),
-      ),
-    );
-  },
-),
+          ListTile(
+            leading: const Icon(Icons.analytics),
+            title: const Text('Analytics'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AnalyticsScreen(),
+                ),
+              );
+            },
+          ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.settings),
             title: const Text('Settings'),
             onTap: () {
               Navigator.pop(context);
-              // Navigate to settings screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingsScreen(),
+                ),
+              );
             },
           ),
           ListTile(
