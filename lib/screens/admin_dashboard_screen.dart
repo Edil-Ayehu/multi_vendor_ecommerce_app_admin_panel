@@ -7,6 +7,7 @@ import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_users_scre
 import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_products_screen.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/screens/settings_screen.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/services/admin_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   final AdminService _adminService = AdminService();
@@ -311,8 +312,8 @@ class AdminDashboardScreen extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Logout'),
-            onTap: () {
-              // Handle logout
+            onTap: () async {
+              await FirebaseAuth.instance.signOut();
             },
           ),
         ],
