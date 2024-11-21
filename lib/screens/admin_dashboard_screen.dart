@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:multi_vendor_ecommerce_app_admin_panel/screens/analytics_screen.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_advertisements_screen.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_orders_screen.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_users_screen.dart';
@@ -279,14 +280,19 @@ class AdminDashboardScreen extends StatelessWidget {
               );
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.analytics),
-            title: const Text('Analytics'),
-            onTap: () {
-              Navigator.pop(context);
-              // Navigate to analytics screen
-            },
-          ),
+ListTile(
+  leading: const Icon(Icons.analytics),
+  title: const Text('Analytics'),
+  onTap: () {
+    Navigator.pop(context);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AnalyticsScreen(),
+      ),
+    );
+  },
+),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.settings),

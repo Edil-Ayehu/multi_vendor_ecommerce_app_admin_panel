@@ -178,12 +178,6 @@ class ManageAdvertisementsScreen extends StatelessWidget {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Implement add advertisement functionality
-        },
-        child: const Icon(Icons.add),
-      ),
     );
   }
 }
