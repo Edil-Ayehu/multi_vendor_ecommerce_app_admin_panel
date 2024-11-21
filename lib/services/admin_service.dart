@@ -6,7 +6,10 @@ class AdminService {
   // Fetch all users (customers and vendors)
   Stream<QuerySnapshot> getAllUsers() {
     try {
-      return _firestore.collection('users').snapshots();
+      return _firestore
+          .collection('users')
+          .where('role', isNotEqualTo: 'admin')
+          .snapshots();
     } catch (e) {
       print('Error getting users: $e');
       return Stream.empty();
@@ -75,23 +78,25 @@ class AdminService {
       final usersCount = await _firestore.collection('users').count().get();
       print('Users count: ${usersCount.count}'); // Debug print
 
-      final productsCount = await _firestore.collection('products').count().get();
+      final productsCount =
+          await _firestore.collection('products').count().get();
       print('Products count: ${productsCount.count}'); // Debug print
 
       final ordersCount = await _firestore.collection('orders').count().get();
       print('Orders count: ${ordersCount.count}'); // Debug print
 
       // Get all orders and calculate total revenue
-      final QuerySnapshot ordersSnapshot = await _firestore.collection('orders').get();
+      final QuerySnapshot ordersSnapshot =
+          await _firestore.collection('orders').get();
       double totalRevenue = 0;
-      
+
       for (var doc in ordersSnapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
         // Make sure to use the correct field name that contains the order total
         final amount = data['totalAmount'] ?? data['total'] ?? 0;
         totalRevenue += (amount is num) ? amount.toDouble() : 0.0;
       }
-      
+
       print('Total revenue: $totalRevenue'); // Debug print
 
       return {
@@ -277,8 +282,7 @@ class AdminService {
 
       for (var doc in ordersSnapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
-        final status =
-            (data['status'] as String?)?.toLowerCase() ?? 'pending';
+        final status = (data['status'] as String?)?.toLowerCase() ?? 'pending';
         if (statusCount.containsKey(status)) {
           statusCount[status] = (statusCount[status] ?? 0) + 1;
         }

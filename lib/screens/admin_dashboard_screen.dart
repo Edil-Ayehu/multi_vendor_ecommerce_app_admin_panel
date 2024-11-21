@@ -164,22 +164,35 @@ class AdminDashboardScreen extends StatelessWidget {
               itemCount: users.length,
               itemBuilder: (context, index) {
                 final userData = users[index].data() as Map<String, dynamic>;
+                final userRole = userData['role'] ?? 'customer';
+
+                Color roleColor;
+                switch (userRole) {
+                  case 'vendor':
+                    roleColor = Colors.green;
+                    break;
+                  case 'admin':
+                    roleColor = Colors.red;
+                    break;
+                  default:
+                    roleColor = Colors.blue;
+                }
+
                 return Card(
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundImage: NetworkImage(
                         userData['profileImage'] ??
-                            'https://placeholder.com/150',
+                            'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y',
                       ),
                     ),
                     title: Text(userData['fullName'] ?? 'N/A'),
                     subtitle: Text(userData['email'] ?? 'N/A'),
                     trailing: Text(
-                      userData['isVendor'] == true ? 'Vendor' : 'Customer',
+                      _capitalizeFirstLetter(userRole),
                       style: TextStyle(
-                        color: userData['isVendor'] == true
-                            ? Colors.green
-                            : Colors.blue,
+                        color: roleColor,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
@@ -399,5 +412,16 @@ class AdminDashboardScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _capitalizeFirstLetter(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1).toLowerCase();
+  }
+}
+
+extension StringExtension on String {
+  String capitalize() {
+    return "${this[0].toUpperCase()}${substring(1).toLowerCase()}";
   }
 }
