@@ -317,8 +317,11 @@ class AnalyticsScreen extends StatelessWidget {
           return const Center(child: Text('No user growth data available'));
         }
 
-        // Sort data by date
-        data.sort((a, b) => a['date'].compareTo(b['date']));
+        // Calculate max value for scaling
+        final maxCount = data.fold<int>(
+          0,
+          (max, item) => math.max(max, item['count'] as int),
+        );
 
         // Create bar groups
         final barGroups = data.asMap().entries.map((entry) {
@@ -337,7 +340,7 @@ class AnalyticsScreen extends StatelessWidget {
         }).toList();
 
         return Container(
-          height: 200,
+          height: 300,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -375,15 +378,7 @@ class AnalyticsScreen extends StatelessWidget {
                     gridData: FlGridData(
                       show: true,
                       drawVerticalLine: false,
-                      horizontalInterval: data.isEmpty
-                          ? 1
-                          : math.max(
-                              1,
-                              data.fold<int>(
-                                      0,
-                                      (max, item) =>
-                                          math.max(max, item['count'] as int)) /
-                                  5),
+                      horizontalInterval: maxCount > 5 ? maxCount / 5 : 1,
                       getDrawingHorizontalLine: (value) {
                         return FlLine(
                           color: Colors.grey.withOpacity(0.1),
@@ -393,10 +388,12 @@ class AnalyticsScreen extends StatelessWidget {
                     ),
                     titlesData: FlTitlesData(
                       show: true,
-                      rightTitles:
-                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      topTitles:
-                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      topTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
                       bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
@@ -424,15 +421,7 @@ class AnalyticsScreen extends StatelessWidget {
                       leftTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
-                          interval: data.isEmpty
-                              ? 1
-                              : math.max(
-                                  1,
-                                  data.fold<int>(
-                                          0,
-                                          (max, item) => math.max(
-                                              max, item['count'] as int)) /
-                                      5),
+                          interval: maxCount > 5 ? maxCount / 5 : 1,
                           getTitlesWidget: (value, meta) {
                             return Text(
                               value.toInt().toString(),
@@ -450,10 +439,9 @@ class AnalyticsScreen extends StatelessWidget {
                     barTouchData: BarTouchData(
                       enabled: true,
                       touchTooltipData: BarTouchTooltipData(
-                        // tooltipBgColor: Colors.blueAccent,
                         getTooltipItem: (group, groupIndex, rod, rodIndex) {
                           return BarTooltipItem(
-                            '${data[group.x.toInt()]['count']} users',
+                            '${data[group.x]['count']} users',
                             const TextStyle(color: Colors.white),
                           );
                         },

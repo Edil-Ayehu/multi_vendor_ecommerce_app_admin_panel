@@ -246,22 +246,41 @@ class AdminService {
           .orderBy('createdAt', descending: false)
           .get();
 
+      // Create a map to store monthly user counts
       Map<String, int> monthlyUsers = {};
 
-      for (var doc in usersSnapshot.docs) {
-        final data = doc.data() as Map<String, dynamic>;
-        final DateTime date = (data['createdAt'] as Timestamp).toDate();
-        final String monthKey =
-            '${date.year}-${date.month.toString().padLeft(2, '0')}';
-        monthlyUsers[monthKey] = (monthlyUsers[monthKey] ?? 0) + 1;
+      // Get current date for last 6 months data
+      DateTime now = DateTime.now();
+      for (int i = 5; i >= 0; i--) {
+        DateTime month = DateTime(now.year, now.month - i, 1);
+        String monthKey = '${month.year}-${month.month.toString().padLeft(2, '0')}';
+        monthlyUsers[monthKey] = 0;
       }
 
-      return monthlyUsers.entries
-          .map((e) => {
-                'date': e.key,
-                'count': e.value,
-              })
-          .toList();
+      // Count users per month
+      for (var doc in usersSnapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        if (data['createdAt'] != null) {
+          final DateTime date = (data['createdAt'] as Timestamp).toDate();
+          final String monthKey = '${date.year}-${date.month.toString().padLeft(2, '0')}';
+          if (monthlyUsers.containsKey(monthKey)) {
+            monthlyUsers[monthKey] = (monthlyUsers[monthKey] ?? 0) + 1;
+          }
+        }
+      }
+
+      // Convert to list of maps and sort by date
+      List<Map<String, dynamic>> result = monthlyUsers.entries.map((entry) {
+        return {
+          'date': entry.key,
+          'count': entry.value,
+        };
+      }).toList();
+
+      result.sort((a, b) => a['date'].compareTo(b['date']));
+      
+      print('User growth data: $result'); // Debug print
+      return result;
     } catch (e) {
       print('Error getting user growth data: $e');
       return [];
