@@ -1,27 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:multi_vendor_ecommerce_app_admin_panel/services/theme_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final themeService = Provider.of<ThemeService>(context);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue,
-        title: const Text('Settings', style: TextStyle(color: Colors.white)),
+        title: const Text('Settings'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Card(
             child: ListTile(
-              leading: const Icon(Icons.color_lens),
+              leading: Icon(
+                isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                color: Theme.of(context).colorScheme.primary,
+              ),
               title: const Text('Theme'),
-              subtitle: const Text('Change app appearance'),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () {
-                // Implement theme settings
-              },
+              subtitle: Text(isDarkMode ? 'Dark Mode' : 'Light Mode'),
+              trailing: Switch(
+                value: isDarkMode,
+                onChanged: (_) => themeService.toggleTheme(),
+              ),
             ),
           ),
           Card(
