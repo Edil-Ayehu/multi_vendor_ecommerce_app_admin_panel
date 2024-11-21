@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/services/admin_service.dart';
+import 'dart:math' as math;
 
 class AnalyticsScreen extends StatelessWidget {
   final AdminService _adminService = AdminService();
@@ -120,6 +121,10 @@ class AnalyticsScreen extends StatelessWidget {
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: _adminService.getRevenueData(),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -129,12 +134,23 @@ class AnalyticsScreen extends StatelessWidget {
           return const Center(child: Text('No revenue data available'));
         }
 
-        final spots = data.asMap().entries.map((e) {
-          return FlSpot(e.key.toDouble(), e.value['amount']);
+        // Sort data by date
+        data.sort((a, b) => a['date'].compareTo(b['date']));
+
+        // Create spots for the line chart
+        final spots = data.asMap().entries.map((entry) {
+          return FlSpot(
+            entry.key.toDouble(),
+            entry.value['amount'].toDouble(),
+          );
         }).toList();
 
+        // Find min and max values for better scaling
+        final maxY = data.fold<double>(
+            0, (max, item) => math.max(max, item['amount'].toDouble()));
+
         return Container(
-          height: 200,
+          height: 300, // Increased height for better visibility
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -157,26 +173,123 @@ class AnalyticsScreen extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+              const SizedBox(height: 8),
+              Text(
+                'Last ${data.length} months',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                ),
+              ),
               const SizedBox(height: 16),
               Expanded(
                 child: LineChart(
                   LineChartData(
-                    gridData: FlGridData(show: false),
-                    titlesData: FlTitlesData(show: false),
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      horizontalInterval: maxY > 0 ? maxY / 5 : 1,
+                      getDrawingHorizontalLine: (value) {
+                        return FlLine(
+                          color: Colors.grey.withOpacity(0.1),
+                          strokeWidth: 1,
+                        );
+                      },
+                    ),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      rightTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      topTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) {
+                            if (value.toInt() >= 0 &&
+                                value.toInt() < data.length) {
+                              final date =
+                                  data[value.toInt()]['date'] as String;
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Text(
+                                  date.substring(
+                                      5), // Show only month part (MM)
+                                  style: const TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              );
+                            }
+                            return const Text('');
+                          },
+                        ),
+                      ),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          interval: maxY > 0 ? maxY / 5 : 1,
+                          getTitlesWidget: (value, meta) {
+                            return Text(
+                              '\$${value.toStringAsFixed(0)}',
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
                     borderData: FlBorderData(show: false),
+                    minX: 0,
+                    maxX: (data.length - 1).toDouble(),
+                    minY: 0,
+                    maxY: maxY * 1.1, // Add 10% padding at the top
                     lineBarsData: [
                       LineChartBarData(
                         spots: spots,
                         isCurved: true,
                         color: Colors.purple,
                         barWidth: 3,
-                        dotData: FlDotData(show: false),
+                        isStrokeCapRound: true,
+                        dotData: FlDotData(
+                          show: true,
+                          getDotPainter: (spot, percent, barData, index) {
+                            return FlDotCirclePainter(
+                              radius: 4,
+                              color: Colors.purple,
+                              strokeWidth: 2,
+                              strokeColor: Colors.white,
+                            );
+                          },
+                        ),
                         belowBarData: BarAreaData(
                           show: true,
                           color: Colors.purple.withOpacity(0.1),
                         ),
                       ),
                     ],
+                    lineTouchData: LineTouchData(
+                      touchTooltipData: LineTouchTooltipData(
+                        // tooltipBackground: Colors.blueAccent,
+
+                        getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
+                          return touchedBarSpots.map((barSpot) {
+                            final index = barSpot.x.toInt();
+                            final date = data[index]['date'] as String;
+                            final amount = data[index]['amount'].toDouble();
+                            return LineTooltipItem(
+                              '$date\n\$${amount.toStringAsFixed(2)}',
+                              const TextStyle(color: Colors.white),
+                            );
+                          }).toList();
+                        },
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -188,51 +301,171 @@ class AnalyticsScreen extends StatelessWidget {
   }
 
   Widget _buildUserGrowthChart() {
-    return Container(
-      height: 200,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 2,
-            blurRadius: 5,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'User Growth',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: BarChart(
-              BarChartData(
-                gridData: FlGridData(show: false),
-                titlesData: FlTitlesData(show: false),
-                borderData: FlBorderData(show: false),
-                barGroups: [
-                  BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: 8)]),
-                  BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 10)]),
-                  BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 14)]),
-                  BarChartGroupData(x: 3, barRods: [BarChartRodData(toY: 15)]),
-                  BarChartGroupData(x: 4, barRods: [BarChartRodData(toY: 13)]),
-                  BarChartGroupData(x: 5, barRods: [BarChartRodData(toY: 18)]),
-                ],
-                barTouchData: BarTouchData(enabled: false),
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _adminService.getUserGrowthData(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final data = snapshot.data!;
+        if (data.isEmpty) {
+          return const Center(child: Text('No user growth data available'));
+        }
+
+        // Sort data by date
+        data.sort((a, b) => a['date'].compareTo(b['date']));
+
+        // Create bar groups
+        final barGroups = data.asMap().entries.map((entry) {
+          return BarChartGroupData(
+            x: entry.key,
+            barRods: [
+              BarChartRodData(
+                toY: entry.value['count'].toDouble(),
+                color: Colors.blue,
+                width: 16,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(4)),
               ),
-            ),
+            ],
+          );
+        }).toList();
+
+        return Container(
+          height: 200,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 2,
+                blurRadius: 5,
+              ),
+            ],
           ),
-        ],
-      ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'User Growth',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Last ${data.length} months',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: BarChart(
+                  BarChartData(
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      horizontalInterval: data.isEmpty
+                          ? 1
+                          : math.max(
+                              1,
+                              data.fold<int>(
+                                      0,
+                                      (max, item) =>
+                                          math.max(max, item['count'] as int)) /
+                                  5),
+                      getDrawingHorizontalLine: (value) {
+                        return FlLine(
+                          color: Colors.grey.withOpacity(0.1),
+                          strokeWidth: 1,
+                        );
+                      },
+                    ),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      rightTitles:
+                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles:
+                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) {
+                            if (value.toInt() >= 0 &&
+                                value.toInt() < data.length) {
+                              final date =
+                                  data[value.toInt()]['date'] as String;
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Text(
+                                  date.substring(
+                                      5), // Show only month part (MM)
+                                  style: const TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              );
+                            }
+                            return const Text('');
+                          },
+                        ),
+                      ),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          interval: data.isEmpty
+                              ? 1
+                              : math.max(
+                                  1,
+                                  data.fold<int>(
+                                          0,
+                                          (max, item) => math.max(
+                                              max, item['count'] as int)) /
+                                      5),
+                          getTitlesWidget: (value, meta) {
+                            return Text(
+                              value.toInt().toString(),
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    barGroups: barGroups,
+                    barTouchData: BarTouchData(
+                      enabled: true,
+                      touchTooltipData: BarTouchTooltipData(
+                        // tooltipBgColor: Colors.blueAccent,
+                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                          return BarTooltipItem(
+                            '${data[group.x.toInt()]['count']} users',
+                            const TextStyle(color: Colors.white),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -240,12 +473,17 @@ class AnalyticsScreen extends StatelessWidget {
     return FutureBuilder<Map<String, int>>(
       future: _adminService.getOrderStatusDistribution(),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
 
         final data = snapshot.data!;
-        final total = data.values.fold<int>(0, (sum, count) => sum + count);
+        final total =
+            data.values.fold<int>(0, (sum, count) => sum + (count ?? 0));
 
         if (total == 0) {
           return const Center(child: Text('No order status data available'));
@@ -282,35 +520,39 @@ class AnalyticsScreen extends StatelessWidget {
                     sectionsSpace: 0,
                     centerSpaceRadius: 40,
                     sections: [
-                      if (data['processing'] != 0)
+                      if ((data['pending'] ?? 0) > 0)
                         PieChartSectionData(
                           color: Colors.orange,
-                          value: data['processing']!.toDouble(),
-                          title: '${((data['processing']! / total) * 100).toStringAsFixed(1)}%',
+                          value: (data['pending'] ?? 0).toDouble(),
+                          title:
+                              '${(((data['pending'] ?? 0) / total) * 100).toStringAsFixed(1)}%',
                           radius: 50,
                           titleStyle: const TextStyle(color: Colors.white),
                         ),
-                      if (data['shipped'] != 0)
+                      if ((data['shipped'] ?? 0) > 0)
                         PieChartSectionData(
                           color: Colors.blue,
-                          value: data['shipped']!.toDouble(),
-                          title: '${((data['shipped']! / total) * 100).toStringAsFixed(1)}%',
+                          value: (data['shipped'] ?? 0).toDouble(),
+                          title:
+                              '${(((data['shipped'] ?? 0) / total) * 100).toStringAsFixed(1)}%',
                           radius: 50,
                           titleStyle: const TextStyle(color: Colors.white),
                         ),
-                      if (data['delivered'] != 0)
+                      if ((data['delivered'] ?? 0) > 0)
                         PieChartSectionData(
                           color: Colors.green,
-                          value: data['delivered']!.toDouble(),
-                          title: '${((data['delivered']! / total) * 100).toStringAsFixed(1)}%',
+                          value: (data['delivered'] ?? 0).toDouble(),
+                          title:
+                              '${(((data['delivered'] ?? 0) / total) * 100).toStringAsFixed(1)}%',
                           radius: 50,
                           titleStyle: const TextStyle(color: Colors.white),
                         ),
-                      if (data['cancelled'] != 0)
+                      if ((data['cancelled'] ?? 0) > 0)
                         PieChartSectionData(
                           color: Colors.red,
-                          value: data['cancelled']!.toDouble(),
-                          title: '${((data['cancelled']! / total) * 100).toStringAsFixed(1)}%',
+                          value: (data['cancelled'] ?? 0).toDouble(),
+                          title:
+                              '${(((data['cancelled'] ?? 0) / total) * 100).toStringAsFixed(1)}%',
                           radius: 50,
                           titleStyle: const TextStyle(color: Colors.white),
                         ),
@@ -318,12 +560,11 @@ class AnalyticsScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              // Legend
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildLegendItem('Processing', Colors.orange),
+                  _buildLegendItem('Pending', Colors.orange),
                   _buildLegendItem('Shipped', Colors.blue),
                   _buildLegendItem('Delivered', Colors.green),
                   _buildLegendItem('Cancelled', Colors.red),

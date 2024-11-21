@@ -75,19 +75,23 @@ class AdminService {
       final usersCount = await _firestore.collection('users').count().get();
       print('Users count: ${usersCount.count}'); // Debug print
 
-      final productsCount =
-          await _firestore.collection('products').count().get();
+      final productsCount = await _firestore.collection('products').count().get();
       print('Products count: ${productsCount.count}'); // Debug print
 
       final ordersCount = await _firestore.collection('orders').count().get();
       print('Orders count: ${ordersCount.count}'); // Debug print
 
-      final orders = await _firestore.collection('orders').get();
+      // Get all orders and calculate total revenue
+      final QuerySnapshot ordersSnapshot = await _firestore.collection('orders').get();
       double totalRevenue = 0;
-      for (var order in orders.docs) {
-        totalRevenue +=
-            (order.data()['totalAmount'] as num?)?.toDouble() ?? 0.0;
+      
+      for (var doc in ordersSnapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        // Make sure to use the correct field name that contains the order total
+        final amount = data['totalAmount'] ?? data['total'] ?? 0;
+        totalRevenue += (amount is num) ? amount.toDouble() : 0.0;
       }
+      
       print('Total revenue: $totalRevenue'); // Debug print
 
       return {
@@ -265,7 +269,7 @@ class AdminService {
           await _firestore.collection('orders').get();
 
       Map<String, int> statusCount = {
-        'processing': 0,
+        'pending': 0,
         'shipped': 0,
         'delivered': 0,
         'cancelled': 0,
@@ -274,7 +278,7 @@ class AdminService {
       for (var doc in ordersSnapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
         final status =
-            (data['status'] as String?)?.toLowerCase() ?? 'processing';
+            (data['status'] as String?)?.toLowerCase() ?? 'pending';
         if (statusCount.containsKey(status)) {
           statusCount[status] = (statusCount[status] ?? 0) + 1;
         }
@@ -284,7 +288,7 @@ class AdminService {
     } catch (e) {
       print('Error getting order status distribution: $e');
       return {
-        'processing': 0,
+        'pending': 0,
         'shipped': 0,
         'delivered': 0,
         'cancelled': 0,
