@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/services/admin_service.dart';
+import 'package:multi_vendor_ecommerce_app_admin_panel/widgets/dotted_divider.dart';
 
 class ManageProductsScreen extends StatefulWidget {
   const ManageProductsScreen({super.key});
@@ -13,12 +14,13 @@ class ManageProductsScreen extends StatefulWidget {
 class _ManageProductsScreenState extends State<ManageProductsScreen> {
   final AdminService _adminService = AdminService();
   String? selectedProductId;
+  String? selectedCategory;
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
-    
+
     // Adjust grid count based on screen size and whether details are shown
     int getCrossAxisCount() {
       if (isSmallScreen) return 2;
@@ -44,9 +46,8 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
             ),
           ),
         ),
-        title: const Text('Manage Products', 
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
-        ),
+        title: const Text('Manage Products',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: _adminService.getAllProducts(),
@@ -75,25 +76,74 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
           // For larger screens, show split view
           return Row(
             children: [
-              // Products Grid
+              // Products Grid with Filter
               Expanded(
                 flex: selectedProductId != null ? 3 : 5,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  child: GridView.builder(
-                    padding: const EdgeInsets.all(16),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: getCrossAxisCount(),
-                      childAspectRatio: 0.75,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
+                child: Column(
+                  children: [
+                    // Category Filter
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Theme.of(context).dividerColor,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: selectedCategory,
+                            hint: const Text('Filter by Category'),
+                            isExpanded: true,
+                            items: _getUniqueCategories(products).map((category) {
+                              return DropdownMenuItem(
+                                value: category == 'All' ? null : category,
+                                child: Text(category),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                selectedCategory = value;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
                     ),
-                    itemCount: products.length,
-                    itemBuilder: (context, index) {
-                      final productData = products[index].data() as Map<String, dynamic>;
-                      return _buildProductCard(products[index].id, productData);
-                    },
-                  ),
+                    // Products Grid
+                    Expanded(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        child: GridView.builder(
+                          padding: const EdgeInsets.all(16),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: getCrossAxisCount(),
+                            childAspectRatio: 0.75,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                          ),
+                          itemCount: products
+                              .where((doc) {
+                                if (selectedCategory == null) return true;
+                                final productData = doc.data() as Map<String, dynamic>;
+                                return productData['category'] == selectedCategory;
+                              })
+                              .length,
+                          itemBuilder: (context, index) {
+                            final filteredProducts = products.where((doc) {
+                              if (selectedCategory == null) return true;
+                              final productData = doc.data() as Map<String, dynamic>;
+                              return productData['category'] == selectedCategory;
+                            }).toList();
+                            final productData = filteredProducts[index].data() as Map<String, dynamic>;
+                            return _buildProductCard(filteredProducts[index].id, productData);
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               // Product Details Panel (only for larger screens)
@@ -120,14 +170,14 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
     final isSelected = productId == selectedProductId;
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
-    
+
     return Card(
       elevation: isSelected ? 8 : 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: isSelected && !isSmallScreen
-          ? BorderSide(color: Theme.of(context).colorScheme.primary, width: 2)
-          : BorderSide.none,
+            ? BorderSide(color: Theme.of(context).colorScheme.primary, width: 2)
+            : BorderSide.none,
       ),
       child: InkWell(
         onTap: () => setState(() => selectedProductId = productId),
@@ -198,66 +248,229 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
     final productData = product.data() as Map<String, dynamic>;
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
-    
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: Icon(
-                  isSmallScreen ? Icons.arrow_back : Icons.close,
-                  size: isSmallScreen ? 24 : 20,
+
+    // Calculate average rating
+    double calculateAverageRating() {
+      final reviews = (productData['reviews'] as List<dynamic>?) ?? [];
+      if (reviews.isEmpty) return 0.0;
+      double totalRating = 0;
+      for (var review in reviews) {
+        totalRating += (review['rating'] as num?)?.toDouble() ?? 0.0;
+      }
+      return totalRating / reviews.length;
+    }
+
+    final averageRating = calculateAverageRating();
+
+    return Container(
+      color: Theme.of(context).colorScheme.background,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header with back/close button and actions
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  ),
                 ),
-                onPressed: () => setState(() => selectedProductId = null),
               ),
-              PopupMenuButton(
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    child: const Text('Delete Product'),
-                    onTap: () => _showDeleteDialog(product.id),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      isSmallScreen ? Icons.arrow_back : Icons.close,
+                      size: isSmallScreen ? 24 : 20,
+                    ),
+                    onPressed: () => setState(() => selectedProductId = null),
+                  ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.inventory_2,
+                              size: 16,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Stock: ${productData['stock'] ?? 0}',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      PopupMenuButton(
+                        icon: Icon(
+                          Icons.more_vert,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.delete_outline,
+                                  color: Theme.of(context).colorScheme.error,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Delete Product',
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            onTap: () => _showDeleteDialog(product.id),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          if (productData['images'] != null) ...[
-            SizedBox(
-              height: 200,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: (productData['images'] as List).length,
-                itemBuilder: (context, index) => Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      productData['images'][index],
-                      width: 200,
-                      fit: BoxFit.cover,
+            ),
+            const SizedBox(height: 24),
+
+            // Product Images Carousel
+            if (productData['images'] != null) ...[
+              Container(
+                height: 300,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: (productData['images'] as List).length,
+                    itemBuilder: (context, index) => Container(
+                      margin: const EdgeInsets.only(right: 16),
+                      width: isSmallScreen ? screenWidth - 48 : 400,
+                      child: Image.network(
+                        productData['images'][index],
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                 ),
               ),
+            ],
+            const SizedBox(height: 32),
+
+            // Product Details Card
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: Theme.of(context).dividerColor.withOpacity(0.2),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      productData['name'] ?? 'N/A',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '\$${productData['price']?.toStringAsFixed(2) ?? '0.00'}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.amber,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.star,
+                                  color: Colors.white, size: 16),
+                              const SizedBox(width: 4),
+                              Text(
+                                // '${productData['averageRating']?.toStringAsFixed(1) ?? '0.0'}',
+                                averageRating.toStringAsFixed(1),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDetailRow(
+                        'Category', productData['category'] ?? 'N/A'),
+                    const DottedDivider(),
+                    _buildDetailRow(
+                        'Stock', productData['stock']?.toString() ?? '0'),
+                  ],
+                ),
+              ),
             ),
+            const SizedBox(height: 24),
+            _buildReviewsSection(productData),
           ],
-          const SizedBox(height: 24),
-          _buildDetailSection('Product Details', [
-            _buildDetailRow('Name', productData['name'] ?? 'N/A'),
-            _buildDetailRow('Price',
-                '\$${productData['price']?.toStringAsFixed(2) ?? '0.00'}'),
-            _buildDetailRow('Category', productData['category'] ?? 'N/A'),
-            _buildDetailRow('Stock', productData['stock']?.toString() ?? '0'),
-            _buildDetailRow('Rating',
-                '${productData['averageRating']?.toStringAsFixed(1) ?? '0.0'} ⭐'),
-          ]),
-          const SizedBox(height: 24),
-          _buildReviewsSection(productData),
-        ],
+        ),
       ),
     );
   }
@@ -303,6 +516,18 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
   Widget _buildReviewsSection(Map<String, dynamic> productData) {
     final reviews = (productData['reviews'] as List<dynamic>?) ?? [];
 
+    // Calculate average rating
+    double calculateAverageRating() {
+      if (reviews.isEmpty) return 0.0;
+      double totalRating = 0;
+      for (var review in reviews) {
+        totalRating += (review['rating'] as num?)?.toDouble() ?? 0.0;
+      }
+      return totalRating / reviews.length;
+    }
+
+    final averageRating = calculateAverageRating();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -329,7 +554,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                   const Icon(Icons.star, color: Colors.amber, size: 20),
                   const SizedBox(width: 4),
                   Text(
-                    '${productData['averageRating']?.toStringAsFixed(1) ?? '0.0'}',
+                    averageRating.toStringAsFixed(1),
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -370,82 +595,83 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
             ),
           )
         else
-          ListView.builder(
+          ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: reviews.length,
+            separatorBuilder: (context, index) => Divider(
+              height: 32,
+              color: Theme.of(context).dividerColor.withOpacity(0.1),
+            ),
             itemBuilder: (context, index) {
               final review = reviews[index] as Map<String, dynamic>;
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              CircleAvatar(
-                                backgroundImage: NetworkImage(
-                                  review['userImage'] ??
-                                      'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y',
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundImage: NetworkImage(
+                                review['userImage'] ??
+                                    'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y',
+                              ),
+                              radius: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  review['userName'] ?? 'Anonymous',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
                                 ),
-                                radius: 20,
-                              ),
-                              const SizedBox(width: 12),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    review['userName'] ?? 'Anonymous',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
+                                Text(
+                                  _formatDate(review['date']),
+                                  style: TextStyle(
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.color,
+                                    fontSize: 12,
                                   ),
-                                  Text(
-                                    _formatDate(review['date']),
-                                    style: TextStyle(
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.color,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: List.generate(
-                              5,
-                              (index) => Icon(
-                                index < (review['rating'] ?? 0)
-                                    ? Icons.star
-                                    : Icons.star_border,
-                                color: Colors.amber,
-                                size: 16,
-                              ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: List.generate(
+                            5,
+                            (index) => Icon(
+                              index < (review['rating'] ?? 0)
+                                  ? Icons.star
+                                  : Icons.star_border,
+                              color: Colors.amber,
+                              size: 16,
                             ),
                           ),
-                        ],
-                      ),
-                      if (review['comment'] != null) ...[
-                        const SizedBox(height: 12),
-                        Text(
-                          review['comment'],
-                          style: const TextStyle(fontSize: 14),
                         ),
                       ],
+                    ),
+                    if (review['comment'] != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        review['comment'],
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
+                        ),
+                      ),
                     ],
-                  ),
+                  ],
                 ),
               );
             },
@@ -487,5 +713,14 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
         ],
       ),
     );
+  }
+
+  List<String> _getUniqueCategories(List<DocumentSnapshot> products) {
+    final Set<String> categories = {'All'}.union(
+      products
+          .map((product) => (product.data() as Map<String, dynamic>)['category'] as String? ?? 'Uncategorized')
+          .toSet(),
+    );
+    return categories.toList()..sort();
   }
 }
