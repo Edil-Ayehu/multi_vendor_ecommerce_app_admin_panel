@@ -176,13 +176,13 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
 
-    return Card(
-      elevation: isSelected ? 8 : 2,
-      shape: RoundedRectangleBorder(
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(8),
-        side: isSelected && !isSmallScreen
-            ? BorderSide(color: Theme.of(context).colorScheme.primary, width: 2)
-            : BorderSide.none,
+        border: isSelected && !isSmallScreen
+            ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2)
+            : Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
       ),
       child: InkWell(
         onTap: () => setState(() => selectedProductId = productId),
@@ -191,8 +191,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(8)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
               child: AspectRatio(
                 aspectRatio: 1,
                 child: Image.network(
