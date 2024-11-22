@@ -39,50 +39,68 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
             ),
           ),
           bottom: TabBar(
-            tabs: [
-              Tab(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.person_rounded,
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Customers',
-                      style: GoogleFonts.poppins(
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Tab(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.store_rounded,
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Vendors',
-                      style: GoogleFonts.poppins(
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            indicatorSize: TabBarIndicatorSize.label,
-            indicatorWeight: 3,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            indicatorSize: TabBarIndicatorSize.tab,
+            indicatorWeight: 2,
             indicatorColor: Theme.of(context).colorScheme.primary,
+            dividerColor: Colors.transparent,
             labelColor: Theme.of(context).colorScheme.primary,
             unselectedLabelColor:
                 Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.7),
+            tabs: [
+              Tab(
+                height: 48,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.person_rounded,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Customers',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Tab(
+                height: 48,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.store_rounded,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Vendors',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         body: TabBarView(
@@ -110,6 +128,15 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
 
         final users = snapshot.data!.docs;
         final isVendorTab = DefaultTabController.of(context).index == 1;
+
+        // Sort users by createdAt timestamp (most recent first)
+        users.sort((a, b) {
+          final aData = a.data() as Map<String, dynamic>;
+          final bData = b.data() as Map<String, dynamic>;
+          final aTime = (aData['createdAt'] as Timestamp).toDate();
+          final bTime = (bData['createdAt'] as Timestamp).toDate();
+          return bTime.compareTo(aTime); // Reverse order for most recent first
+        });
 
         if (isVendorTab) {
           return ListView.builder(
