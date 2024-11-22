@@ -3,6 +3,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/services/admin_service.dart';
 import 'dart:math' as math;
+import 'package:google_fonts/google_fonts.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class AnalyticsScreen extends StatelessWidget {
   final AdminService _adminService = AdminService();
@@ -12,38 +14,91 @@ class AnalyticsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.blue,
-        title: const Text('Analytics', style: TextStyle(color: Colors.white)),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        title: Text(
+          'Analytics',
+          style: GoogleFonts.poppins(
+            color: Theme.of(context).textTheme.titleLarge?.color,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: Theme.of(context).iconTheme.color,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _adminService.getPlatformAnalytics(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Text(
+                'Error: ${snapshot.error}',
+                style: GoogleFonts.poppins(),
+              ),
+            );
           }
 
           if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: LoadingAnimationWidget.staggeredDotsWave(
+                color: Theme.of(context).colorScheme.primary,
+                size: 40,
+              ),
+            );
           }
 
           final data = snapshot.data!;
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const SizedBox(height: 20),
                 _buildSummaryCards(data),
-                const SizedBox(height: 24),
-                _buildRevenueChart(),
-                const SizedBox(height: 24),
-                _buildUserGrowthChart(),
-                const SizedBox(height: 24),
-                _buildOrderStatusChart(),
+                const SizedBox(height: 30),
+                _buildSectionTitle('Revenue Trend'),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  child: _buildRevenueChart(),
+                ),
+                const SizedBox(height: 30),
+                _buildSectionTitle('User Growth'),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  child: _buildUserGrowthChart(),
+                ),
+                const SizedBox(height: 30),
+                _buildSectionTitle('Order Distribution'),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  child: _buildOrderStatusChart(),
+                ),
+                const SizedBox(height: 30),
               ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Text(
+        title,
+        style: GoogleFonts.poppins(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -55,30 +110,31 @@ class AnalyticsScreen extends StatelessWidget {
       crossAxisCount: 2,
       crossAxisSpacing: 16,
       mainAxisSpacing: 16,
+      childAspectRatio: 1.5,
       children: [
         _buildStatCard(
           'Total Users',
           data['totalUsers'].toString(),
-          Icons.people,
-          Colors.blue,
+          Icons.people_rounded,
+          const Color(0xFF6C63FF),
         ),
         _buildStatCard(
           'Total Products',
           data['totalProducts'].toString(),
-          Icons.shopping_bag,
-          Colors.green,
+          Icons.shopping_bag_rounded,
+          const Color(0xFF4CAF50),
         ),
         _buildStatCard(
           'Total Orders',
           data['totalOrders'].toString(),
-          Icons.shopping_cart,
-          Colors.orange,
+          Icons.shopping_cart_rounded,
+          const Color(0xFFFFA726),
         ),
         _buildStatCard(
           'Revenue',
           '\$${NumberFormat('#,##0.00').format(data['totalRevenue'])}',
-          Icons.attach_money,
-          Colors.purple,
+          Icons.attach_money_rounded,
+          const Color(0xFFE91E63),
         ),
       ],
     );
@@ -86,34 +142,44 @@ class AnalyticsScreen extends StatelessWidget {
 
   Widget _buildStatCard(
       String title, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.5)),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 32),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 500),
+      builder: (context, opacity, child) {
+        return Opacity(
+          opacity: opacity,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: color.withOpacity(0.2)),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: color, size: 32),
+                const SizedBox(height: 12),
+                Text(
+                  value,
+                  style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
+                ),
+                Text(
+                  title,
+                  style: GoogleFonts.poppins(
+                    color: color.withOpacity(0.8),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
             ),
           ),
-          Text(
-            title,
-            style: TextStyle(
-              color: color.withOpacity(0.8),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -150,16 +216,16 @@ class AnalyticsScreen extends StatelessWidget {
             0, (max, item) => math.max(max, item['amount'].toDouble()));
 
         return Container(
-          height: 300, // Increased height for better visibility
-          padding: const EdgeInsets.all(16),
+          height: 300,
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                spreadRadius: 2,
-                blurRadius: 5,
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
               ),
             ],
           ),
@@ -341,15 +407,15 @@ class AnalyticsScreen extends StatelessWidget {
 
         return Container(
           height: 300,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                spreadRadius: 2,
-                blurRadius: 5,
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
               ),
             ],
           ),
