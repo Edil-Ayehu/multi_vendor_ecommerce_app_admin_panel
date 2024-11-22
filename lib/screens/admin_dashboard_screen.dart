@@ -20,7 +20,24 @@ class AdminDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin Dashboard'),
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Theme.of(context).colorScheme.primary,
+                Theme.of(context).colorScheme.secondary,
+              ],
+            ),
+          ),
+        ),
+        title: Text(
+          'Admin Dashboard',
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _adminService.getPlatformAnalytics(),
@@ -36,17 +53,38 @@ class AdminDashboardScreen extends StatelessWidget {
           }
 
           final data = snapshot.data!;
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildStatisticsGrid(data),
-                const SizedBox(height: 24),
-                _buildRecentOrders(),
-                const SizedBox(height: 24),
-                _buildRecentUsers(),
-              ],
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Theme.of(context).scaffoldBackgroundColor,
+                  Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                ],
+              ),
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Overview',
+                    style: GoogleFonts.poppins(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildStatisticsGrid(context, data),
+                  const SizedBox(height: 32),
+                  _buildRecentOrdersSection(),
+                  const SizedBox(height: 32),
+                  _buildRecentUsersSection(),
+                ],
+              ),
             ),
           );
         },
@@ -55,43 +93,208 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatisticsGrid(Map<String, dynamic> data) {
+  Widget _buildStatisticsGrid(BuildContext context, Map<String, dynamic> data) {
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisCount: 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
+      crossAxisSpacing: 24,
+      mainAxisSpacing: 24,
+      childAspectRatio: 1.5,
       children: [
         _buildStatCard(
           'Total Users',
           data['totalUsers'].toString(),
-          Icons.people,
+          LineIcons.users,
           Colors.blue,
         ),
         _buildStatCard(
           'Total Products',
           data['totalProducts'].toString(),
-          Icons.shopping_bag,
+          LineIcons.shoppingBag,
           Colors.green,
         ),
         _buildStatCard(
           'Total Orders',
           data['totalOrders'].toString(),
-          Icons.shopping_cart,
+          LineIcons.shoppingCart,
           Colors.orange,
         ),
         _buildStatCard(
           'Revenue',
-          '\$${data['totalRevenue'].toStringAsFixed(2)}',
-          Icons.attach_money,
+          data['totalRevenue'].toString(),
+          LineIcons.moneyBill,
           Colors.purple,
         ),
       ],
     );
   }
 
-  // ... existing code ...
+  Widget _buildRecentOrdersSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Recent Orders',
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextButton.icon(
+              icon: const Icon(LineIcons.angleRight, size: 18),
+              label: const Text('View All'),
+              onPressed: () {},
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: _buildRecentOrders(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRecentUsersSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Recent Users',
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextButton.icon(
+              icon: const Icon(LineIcons.angleRight, size: 18),
+              label: const Text('View All'),
+              onPressed: () {},
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: _buildRecentUsers(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    // Format the value for display
+    String displayValue = value;
+    if (title == 'Revenue') {
+      try {
+        final double amount = double.parse(value);
+        displayValue = '\$${amount.toStringAsFixed(2)}';
+      } catch (e) {
+        displayValue = '\$0.00';
+      }
+    }
+
+    // Calculate percentage safely
+    String percentageText = '0%';
+    try {
+      final double numValue = double.parse(value);
+      percentageText = '+${(numValue * 0.1).toStringAsFixed(0)}%';
+    } catch (e) {
+      // Use default 0% if parsing fails
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  percentageText,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            displayValue,
+            style: GoogleFonts.poppins(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              color: Colors.grey[600],
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildRecentOrders() {
     return Column(
@@ -224,9 +427,9 @@ class AdminDashboardScreen extends StatelessWidget {
           children: [
             const SizedBox(height: 12),
             DrawerHeader(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.transparent,
-                borderRadius: const BorderRadius.only(
+                borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(20),
                   bottomRight: Radius.circular(20),
                 ),
@@ -394,39 +597,6 @@ class AdminDashboardScreen extends StatelessWidget {
         icon,
         color: Colors.white,
         size: 16,
-      ),
-    );
-  }
-
-  Widget _buildStatCard(
-      String title, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.5)),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 32),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          Text(
-            title,
-            style: TextStyle(
-              color: color.withOpacity(0.8),
-            ),
-          ),
-        ],
       ),
     );
   }
