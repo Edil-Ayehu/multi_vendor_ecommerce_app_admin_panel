@@ -88,7 +88,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         decoration: BoxDecoration(
                           border: Border.all(
-                            color: Theme.of(context).dividerColor,
+                            color: Colors.grey[300]!,
                           ),
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -97,7 +97,8 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                             value: selectedCategory,
                             hint: const Text('Filter by Category'),
                             isExpanded: true,
-                            items: _getUniqueCategories(products).map((category) {
+                            items:
+                                _getUniqueCategories(products).map((category) {
                               return DropdownMenuItem(
                                 value: category == 'All' ? null : category,
                                 child: Text(category),
@@ -118,27 +119,31 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                         duration: const Duration(milliseconds: 300),
                         child: GridView.builder(
                           padding: const EdgeInsets.all(16),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: getCrossAxisCount(),
                             childAspectRatio: 0.75,
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 12,
                           ),
-                          itemCount: products
-                              .where((doc) {
-                                if (selectedCategory == null) return true;
-                                final productData = doc.data() as Map<String, dynamic>;
-                                return productData['category'] == selectedCategory;
-                              })
-                              .length,
+                          itemCount: products.where((doc) {
+                            if (selectedCategory == null) return true;
+                            final productData =
+                                doc.data() as Map<String, dynamic>;
+                            return productData['category'] == selectedCategory;
+                          }).length,
                           itemBuilder: (context, index) {
                             final filteredProducts = products.where((doc) {
                               if (selectedCategory == null) return true;
-                              final productData = doc.data() as Map<String, dynamic>;
-                              return productData['category'] == selectedCategory;
+                              final productData =
+                                  doc.data() as Map<String, dynamic>;
+                              return productData['category'] ==
+                                  selectedCategory;
                             }).toList();
-                            final productData = filteredProducts[index].data() as Map<String, dynamic>;
-                            return _buildProductCard(filteredProducts[index].id, productData);
+                            final productData = filteredProducts[index].data()
+                                as Map<String, dynamic>;
+                            return _buildProductCard(
+                                filteredProducts[index].id, productData);
                           },
                         ),
                       ),
@@ -403,10 +408,10 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                   children: [
                     Text(
                       productData['name'] ?? 'N/A',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 24,
+                          ),
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -417,7 +422,10 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.3),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -457,12 +465,61 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 24),
+                    // Description Section
+                    Text(
+                      'Description',
+                      style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                            fontSize: 18,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color:
+                              Theme.of(context).dividerColor.withOpacity(0.1),
+                        ),
+                      ),
+                      child: Text(
+                        productData['description'] ??
+                            'No description available',
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1.5,
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // Product Details
+                    Text(
+                      'Product Details',
+                      style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                            fontSize: 18,
+                          ),
+                    ),
                     const SizedBox(height: 16),
                     _buildDetailRow(
                         'Category', productData['category'] ?? 'N/A'),
                     const DottedDivider(),
                     _buildDetailRow(
                         'Stock', productData['stock']?.toString() ?? '0'),
+                    if (productData['brand'] != null) ...[
+                      const DottedDivider(),
+                      _buildDetailRow('Brand', productData['brand']),
+                    ],
+                    if (productData['sku'] != null) ...[
+                      const DottedDivider(),
+                      _buildDetailRow('SKU', productData['sku']),
+                    ],
                   ],
                 ),
               ),
@@ -481,10 +538,10 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
       children: [
         Text(
           title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
+          style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                fontWeight: FontWeight.w500,
+                fontSize: 18,
+              ),
         ),
         const SizedBox(height: 8),
         ...children,
@@ -498,16 +555,15 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
+          style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
         ),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 16,
-          ),
+          style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
         ),
       ],
     );
@@ -536,11 +592,11 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
           children: [
             Text(
               'Reviews',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
-              ),
+              style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                    fontSize: 18,
+                  ),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -599,10 +655,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: reviews.length,
-            separatorBuilder: (context, index) => Divider(
-              height: 32,
-              color: Theme.of(context).dividerColor.withOpacity(0.1),
-            ),
+            separatorBuilder: (context, index) => const DottedDivider(),
             itemBuilder: (context, index) {
               final review = reviews[index] as Map<String, dynamic>;
               return Padding(
@@ -628,19 +681,23 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                               children: [
                                 Text(
                                   review['userName'] ?? 'Anonymous',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall!
+                                      .copyWith(
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.black87,
+                                        fontSize: 14,
+                                      ),
                                 ),
                                 Text(
-                                  _formatDate(review['date']),
+                                  _formatDate(review['createdAt']),
                                   style: TextStyle(
                                     color: Theme.of(context)
                                         .textTheme
                                         .bodySmall
                                         ?.color,
-                                    fontSize: 12,
+                                    fontSize: 10,
                                   ),
                                 ),
                               ],
@@ -718,9 +775,35 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
   List<String> _getUniqueCategories(List<DocumentSnapshot> products) {
     final Set<String> categories = {'All'}.union(
       products
-          .map((product) => (product.data() as Map<String, dynamic>)['category'] as String? ?? 'Uncategorized')
+          .map((product) =>
+              (product.data() as Map<String, dynamic>)['category'] as String? ??
+              'Uncategorized')
           .toSet(),
     );
     return categories.toList()..sort();
+  }
+}
+
+class DottedDivider extends StatelessWidget {
+  const DottedDivider({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: List.generate(
+          150 ~/ 2,
+          (index) => Expanded(
+            child: Container(
+              color: index.isEven
+                  ? Theme.of(context).dividerColor.withOpacity(0.1)
+                  : Colors.transparent,
+              height: 1,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
