@@ -182,6 +182,15 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
+                    Text(
+                      productData['description'] ?? 'No Description',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     const Spacer(),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -226,8 +235,9 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
   }
 
   void _showProductDetails(Map<String, dynamic> productData) {
-    // Local variable for tracking image index within dialog
+    // Local variables for dialog
     int dialogImageIndex = 0;
+    final PageController pageController = PageController();
 
     showDialog(
       context: context,
@@ -235,7 +245,6 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.all(24),
         child: StatefulBuilder(
-          // Wrap with StatefulBuilder
           builder: (context, setDialogState) {
             return Container(
               constraints: BoxConstraints(
@@ -298,6 +307,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                                       alignment: Alignment.center,
                                       children: [
                                         PageView.builder(
+                                          controller: pageController,
                                           itemCount:
                                               (productData['images'] as List)
                                                   .length,
@@ -346,6 +356,15 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                                                         ? () {
                                                             setDialogState(() {
                                                               dialogImageIndex--;
+                                                              pageController
+                                                                  .previousPage(
+                                                                duration:
+                                                                    const Duration(
+                                                                        milliseconds:
+                                                                            300),
+                                                                curve: Curves
+                                                                    .easeInOut,
+                                                              );
                                                             });
                                                           }
                                                         : null,
@@ -399,6 +418,15 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                                                         ? () {
                                                             setDialogState(() {
                                                               dialogImageIndex++;
+                                                              pageController
+                                                                  .nextPage(
+                                                                duration:
+                                                                    const Duration(
+                                                                        milliseconds:
+                                                                            300),
+                                                                curve: Curves
+                                                                    .easeInOut,
+                                                              );
                                                             });
                                                           }
                                                         : null,
