@@ -50,13 +50,67 @@ class _ManageAdvertisementsScreenState extends State<ManageAdvertisementsScreen>
         ),
         bottom: TabBar(
           controller: _tabController,
-          labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-          labelColor: Theme.of(context).colorScheme.primary,
-          unselectedLabelColor: Colors.grey,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          indicatorSize: TabBarIndicatorSize.tab,
+          indicatorWeight: 2,
           indicatorColor: Theme.of(context).colorScheme.primary,
-          tabs: const [
-            Tab(text: 'Active Ads'),
-            Tab(text: 'Expired Ads'),
+          dividerColor: Colors.transparent,
+          labelColor: Theme.of(context).colorScheme.primary,
+          unselectedLabelColor:
+              Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.7),
+          tabs: [
+            Tab(
+              height: 48,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      LineIcons.alternateExchange,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Active Ads',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Tab(
+              height: 48,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      LineIcons.history,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Expired Ads',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
