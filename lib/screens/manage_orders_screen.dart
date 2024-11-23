@@ -284,85 +284,325 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildDetailSection(
-          context,
-          'Customer Information',
-          [
-            _buildInfoRow(
-                context, LineIcons.user, 'ID: ${orderData['userId'] ?? 'N/A'}'),
-            _buildInfoRow(context, LineIcons.mapMarker,
-                'City: ${orderData['city'] ?? 'N/A'}'),
-            _buildInfoRow(context, LineIcons.envelope,
-                'ZIP: ${orderData['zipCode'] ?? 'N/A'}'),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Order Items',
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
+        // Order Summary Card
+        Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: Theme.of(context).dividerColor.withOpacity(0.1),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Order Summary',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    _buildStatusChip(orderData['status'] ?? 'pending'),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildInfoRow(
+                  context,
+                  LineIcons.calendar,
+                  'Order Date',
+                  DateFormat('MMM d, yyyy • h:mm a')
+                      .format((orderData['createdAt'] as Timestamp).toDate()),
+                ),
+              ],
+            ),
           ),
         ),
-        const SizedBox(height: 8),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: items.length,
-          itemBuilder: (context, index) {
-            final item = items[index];
-            return ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  item['image'] ?? 'https://via.placeholder.com/50',
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
+        const SizedBox(height: 24),
+
+        // Customer Information Card
+        StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(orderData['userId'])
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return const Text('Error loading customer data');
+            }
+
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final userData = snapshot.data!.data() as Map<String, dynamic>?;
+            if (userData == null) {
+              return const Text('Customer not found');
+            }
+
+            return Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: Theme.of(context).dividerColor.withOpacity(0.1),
                 ),
               ),
-              title: Text(
-                item['productName'] ?? 'N/A',
-                style: GoogleFonts.poppins(fontSize: 14),
-              ),
-              subtitle: Text(
-                'Quantity: ${item['quantity']} x \$${item['price']?.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 13),
-              ),
-              trailing: Text(
-                '\$${(item['quantity'] * (item['price'] ?? 0)).toStringAsFixed(2)}',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Customer Information',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundColor: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.1),
+                          backgroundImage: userData['profileImage'] != null
+                              ? NetworkImage(userData['profileImage'])
+                              : null,
+                          child: userData['profileImage'] == null
+                              ? Icon(
+                                  LineIcons.user,
+                                  color: Theme.of(context).colorScheme.primary,
+                                )
+                              : null,
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                userData['fullName'] ?? 'N/A',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                userData['email'] ?? 'N/A',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.color
+                                      ?.withOpacity(0.7),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             );
           },
         ),
-        const Divider(height: 24),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Total Amount',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-              ),
+        const SizedBox(height: 24),
+
+        // Customer Information Card
+        Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: Theme.of(context).dividerColor.withOpacity(0.1),
             ),
-            Text(
-              '\$${orderData['total']?.toStringAsFixed(2) ?? '0.00'}',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize: 18,
-                color: Theme.of(context).colorScheme.primary,
-              ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Shipping Details',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildInfoRow(
+                  context,
+                  LineIcons.mapMarker,
+                  'Shipping Address',
+                  '${orderData['shippingAddress'] ?? 'N/A'}',
+                ),
+                const SizedBox(height: 8),
+                _buildInfoRow(
+                  context,
+                  LineIcons.building,
+                  'City',
+                  orderData['city'] ?? 'N/A',
+                ),
+                const SizedBox(height: 8),
+                _buildInfoRow(
+                  context,
+                  LineIcons.envelope,
+                  'ZIP Code',
+                  orderData['zipCode'] ?? 'N/A',
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-        const SizedBox(height: 16),
-        _buildStatusButtons(context, orderId, orderData['status']),
+        const SizedBox(height: 24),
+
+        // Order Items Card
+        Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: Theme.of(context).dividerColor.withOpacity(0.1),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Order Items',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: items.length,
+                  separatorBuilder: (context, index) =>
+                      const Divider(height: 24),
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            item['image'] ?? 'https://via.placeholder.com/50',
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item['productName'] ?? 'N/A',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Quantity: ${item['quantity']} × \$${item['price']?.toStringAsFixed(2)}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.color
+                                      ?.withOpacity(0.7),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          '\$${(item['quantity'] * (item['price'] ?? 0)).toStringAsFixed(2)}',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                const Divider(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Total Amount',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Text(
+                      '\$${orderData['total']?.toStringAsFixed(2) ?? '0.00'}',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 18,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Status Update Buttons
+        Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: Theme.of(context).dividerColor.withOpacity(0.1),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Update Status',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildStatusButtons(context, orderId, orderData['status']),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -463,49 +703,47 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen> {
     );
   }
 
-  Widget _buildDetailSection(
-      BuildContext context, String title, List<Widget> children) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildInfoRow(
+      BuildContext context, IconData icon, String label, String value) {
+    return Row(
       children: [
-        Text(
-          title,
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
           ),
-        ),
-        const SizedBox(height: 8),
-        ...children,
-      ],
-    );
-  }
-
-  Widget _buildInfoRow(BuildContext context, IconData icon, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        children: [
-          Icon(
+          child: Icon(
             icon,
             size: 16,
-            color:
-                Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+            color: Theme.of(context).colorScheme.primary,
           ),
-          const SizedBox(width: 8),
-          Text(
-            text,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.color
-                  ?.withOpacity(0.7),
+        ),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.color
+                    ?.withOpacity(0.6),
+              ),
             ),
-          ),
-        ],
-      ),
+            Text(
+              value,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
