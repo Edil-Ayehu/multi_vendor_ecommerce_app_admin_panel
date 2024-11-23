@@ -17,6 +17,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
   final AdminService _adminService = AdminService();
   String? selectedProductId;
   String? selectedCategory;
+  int currentImageIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -225,215 +226,381 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
   }
 
   void _showProductDetails(Map<String, dynamic> productData) {
-    final reviews = (productData['reviews'] as List<dynamic>?) ?? [];
-    final averageRating = reviews.isEmpty
-        ? 0.0
-        : reviews.map((r) => r['rating'] as num).reduce((a, b) => a + b) /
-            reviews.length;
+    // Local variable for tracking image index within dialog
+    int dialogImageIndex = 0;
 
     showDialog(
       context: context,
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.all(24),
-        child: Container(
-          constraints: BoxConstraints(
-            maxWidth: 800,
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
-          ),
-          decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header with close button
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+        child: StatefulBuilder(
+          // Wrap with StatefulBuilder
+          builder: (context, setDialogState) {
+            return Container(
+              constraints: BoxConstraints(
+                maxWidth: 800,
+                maxHeight: MediaQuery.of(context).size.height * 0.85,
+              ),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header with close button
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color:
+                              Theme.of(context).dividerColor.withOpacity(0.1),
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Product Details',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(LineIcons.times),
+                          onPressed: () => Navigator.pop(context),
+                          tooltip: 'Close',
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Product Details',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(LineIcons.times),
-                      onPressed: () => Navigator.pop(context),
-                      tooltip: 'Close',
-                    ),
-                  ],
-                ),
-              ),
-              // Product content
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Image Carousel
-                      if ((productData['images'] as List<dynamic>?)
-                              ?.isNotEmpty ??
-                          false)
-                        SizedBox(
-                          height: 300,
-                          child: PageView.builder(
-                            itemCount: (productData['images'] as List).length,
-                            itemBuilder: (context, index) {
-                              return ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.network(
-                                  productData['images'][index],
-                                  fit: BoxFit.cover,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      const SizedBox(height: 24),
-                      // Title and Category
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  // Product content
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Text(
-                              productData['name'] ?? 'No Name',
-                              style: GoogleFonts.poppins(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .primary
-                                  .withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              productData['category'] ?? 'Uncategorized',
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      // Price and Stock
-                      Row(
-                        children: [
-                          Text(
-                            '\$${(productData['price'] ?? 0.0).toStringAsFixed(2)}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              'Stock: ${productData['stock'] ?? 0}',
-                              style: GoogleFonts.poppins(fontSize: 14),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      // Description
-                      Text(
-                        'Description',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        productData['description'] ??
-                            'No description available',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          height: 1.5,
-                        ),
-                      ),
-                      if (reviews.isNotEmpty) ...[
-                        const SizedBox(height: 24),
-                        // Reviews Section
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Reviews',
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .primary
-                                    .withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
+                          // Update Image Carousel section
+                          if ((productData['images'] as List<dynamic>?)
+                                  ?.isNotEmpty ??
+                              false) ...[
+                            SizedBox(
+                              height: 340,
+                              child: Column(
                                 children: [
-                                  const Icon(Icons.star,
-                                      color: Colors.amber, size: 16),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${averageRating.toStringAsFixed(1)} (${reviews.length})',
-                                    style: GoogleFonts.poppins(fontSize: 14),
+                                  Expanded(
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        PageView.builder(
+                                          itemCount:
+                                              (productData['images'] as List)
+                                                  .length,
+                                          itemBuilder: (context, index) {
+                                            return ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              child: Image.network(
+                                                productData['images'][index],
+                                                fit: BoxFit.cover,
+                                              ),
+                                            );
+                                          },
+                                          onPageChanged: (index) {
+                                            setDialogState(() {
+                                              dialogImageIndex = index;
+                                            });
+                                          },
+                                        ),
+                                        // Navigation Arrows
+                                        if ((productData['images'] as List)
+                                                .length >
+                                            1) ...[
+                                          Positioned.fill(
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                // Previous Button
+                                                Material(
+                                                  color: Colors.black26,
+                                                  borderRadius:
+                                                      const BorderRadius
+                                                          .horizontal(
+                                                    right: Radius.circular(25),
+                                                  ),
+                                                  child: InkWell(
+                                                    borderRadius:
+                                                        const BorderRadius
+                                                            .horizontal(
+                                                      right:
+                                                          Radius.circular(25),
+                                                    ),
+                                                    onTap: dialogImageIndex > 0
+                                                        ? () {
+                                                            setDialogState(() {
+                                                              dialogImageIndex--;
+                                                            });
+                                                          }
+                                                        : null,
+                                                    child: Container(
+                                                      decoration:
+                                                          const BoxDecoration(
+                                                        color: Colors.black,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .horizontal(
+                                                          right:
+                                                              Radius.circular(
+                                                                  25),
+                                                        ),
+                                                      ),
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              12),
+                                                      child: Icon(
+                                                        Icons
+                                                            .arrow_back_ios_new,
+                                                        color:
+                                                            dialogImageIndex > 0
+                                                                ? Colors.white
+                                                                : Colors
+                                                                    .white38,
+                                                        size: 24,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                // Next Button
+                                                Material(
+                                                  color: Colors.black26,
+                                                  borderRadius:
+                                                      const BorderRadius
+                                                          .horizontal(
+                                                    left: Radius.circular(25),
+                                                  ),
+                                                  child: InkWell(
+                                                    borderRadius:
+                                                        const BorderRadius
+                                                            .horizontal(
+                                                      left: Radius.circular(25),
+                                                    ),
+                                                    onTap: dialogImageIndex <
+                                                            (productData['images']
+                                                                        as List)
+                                                                    .length -
+                                                                1
+                                                        ? () {
+                                                            setDialogState(() {
+                                                              dialogImageIndex++;
+                                                            });
+                                                          }
+                                                        : null,
+                                                    child: Container(
+                                                      decoration:
+                                                          const BoxDecoration(
+                                                        color: Colors.black,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .horizontal(
+                                                          left: Radius.circular(
+                                                              25),
+                                                        ),
+                                                      ),
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              12),
+                                                      child: Icon(
+                                                        Icons.arrow_forward_ios,
+                                                        color: dialogImageIndex <
+                                                                (productData['images']
+                                                                            as List)
+                                                                        .length -
+                                                                    1
+                                                            ? Colors.white
+                                                            : Colors.white38,
+                                                        size: 24,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  // Updated Page Indicators
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: List.generate(
+                                      (productData['images'] as List).length,
+                                      (index) => Container(
+                                        margin: const EdgeInsets.symmetric(
+                                            horizontal: 4),
+                                        width: 8,
+                                        height: 8,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: dialogImageIndex == index
+                                              ? Theme.of(context)
+                                                  .colorScheme
+                                                  .primary
+                                              : Colors.grey.withOpacity(0.3),
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
+                            const SizedBox(height: 24),
                           ],
-                        ),
-                        const SizedBox(height: 16),
-                        // Reviews List
-                        ...reviews.map((review) => _buildReviewItem(review)),
-                      ],
-                    ],
+                          // Title and Category
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  productData['name'] ?? 'No Name',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .primary
+                                      .withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  productData['category'] ?? 'Uncategorized',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          // Price and Stock
+                          Row(
+                            children: [
+                              Text(
+                                '\$${(productData['price'] ?? 0.0).toStringAsFixed(2)}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  'Stock: ${productData['stock'] ?? 0}',
+                                  style: GoogleFonts.poppins(fontSize: 14),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          // Description
+                          Text(
+                            'Description',
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            productData['description'] ??
+                                'No description available',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              height: 1.5,
+                            ),
+                          ),
+                          if (productData['reviews'] != null) ...[
+                            const SizedBox(height: 24),
+                            // Reviews Section
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Reviews',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.star,
+                                          color: Colors.amber, size: 16),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${_calculateAverageRating(productData['reviews'] as List<dynamic>?).toStringAsFixed(1)} (${(productData['reviews'] as List<dynamic>?)?.length ?? 0})',
+                                        style:
+                                            GoogleFonts.poppins(fontSize: 14),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            // Reviews List
+                            ...(productData['reviews'] as List<dynamic>?)?.map(
+                                    (review) => _buildReviewItem(review)) ??
+                                [],
+                          ],
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
@@ -550,6 +717,16 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
           .toSet(),
     );
     return categories.toList()..sort();
+  }
+
+  double _calculateAverageRating(List<dynamic>? reviews) {
+    if (reviews == null || reviews.isEmpty) return 0.0;
+
+    double totalRating = reviews.fold(0.0, (sum, review) {
+      return sum + (review['rating'] ?? 0.0);
+    });
+
+    return totalRating / reviews.length;
   }
 }
 
