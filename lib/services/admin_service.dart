@@ -318,4 +318,37 @@ class AdminService {
       };
     }
   }
+
+  Future<Map<String, int>> getAdvertisementDistribution() async {
+    try {
+      final QuerySnapshot adsSnapshot = await _firestore.collection('advertisements').get();
+      
+      int activeAds = 0;
+      int expiredAds = 0;
+
+      for (var doc in adsSnapshot.docs) {
+        final adData = doc.data() as Map<String, dynamic>;
+        final expiryDate = (adData['expiryDate'] as Timestamp).toDate();
+        
+        if (!expiryDate.isBefore(DateTime.now()) && adData['isActive'] == true) {
+          activeAds++;
+        } else {
+          expiredAds++;
+        }
+      }
+
+      return {
+        'active': activeAds,
+        'expired': expiredAds,
+        'total': adsSnapshot.docs.length,
+      };
+    } catch (e) {
+      print('Error getting advertisement distribution: $e');
+      return {
+        'active': 0,
+        'expired': 0,
+        'total': 0,
+      };
+    }
+  }
 }

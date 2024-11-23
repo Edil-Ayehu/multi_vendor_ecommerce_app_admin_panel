@@ -82,6 +82,12 @@ class AnalyticsScreen extends StatelessWidget {
                   child: _buildOrderStatusChart(),
                 ),
                 const SizedBox(height: 30),
+                _buildSectionTitle('Advertisement Analytics'),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  child: _buildAdvertisementChart(),
+                ),
+                const SizedBox(height: 30),
               ],
             ),
           );
@@ -631,6 +637,110 @@ class AnalyticsScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildAdvertisementChart() {
+    return FutureBuilder<Map<String, int>>(
+      future: _adminService.getAdvertisementDistribution(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final data = snapshot.data!;
+        final total = data['total'] ?? 0;
+
+        if (total == 0) {
+          return const Center(child: Text('No advertisement data available'));
+        }
+
+        return Container(
+          height: 200,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 2,
+                blurRadius: 5,
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Advertisement Distribution',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: PieChart(
+                        PieChartData(
+                          sectionsSpace: 0,
+                          centerSpaceRadius: 30,
+                          sections: [
+                            PieChartSectionData(
+                              color: Colors.green,
+                              value: (data['active'] ?? 0).toDouble(),
+                              title:
+                                  '${((data['active'] ?? 0) / total * 100).toStringAsFixed(1)}%',
+                              radius: 50,
+                              titleStyle: const TextStyle(color: Colors.white),
+                            ),
+                            PieChartSectionData(
+                              color: Colors.red,
+                              value: (data['expired'] ?? 0).toDouble(),
+                              title:
+                                  '${((data['expired'] ?? 0) / total * 100).toStringAsFixed(1)}%',
+                              radius: 50,
+                              titleStyle: const TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildAdLegendItem(
+                              'Active', Colors.green, data['active'] ?? 0),
+                          const SizedBox(height: 8),
+                          _buildAdLegendItem(
+                              'Expired', Colors.red, data['expired'] ?? 0),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Total Ads: ${data['total']}',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildLegendItem(String label, Color color) {
     return Row(
       children: [
@@ -644,6 +754,26 @@ class AnalyticsScreen extends StatelessWidget {
         ),
         const SizedBox(width: 4),
         Text(label, style: const TextStyle(fontSize: 12)),
+      ],
+    );
+  }
+
+  Widget _buildAdLegendItem(String label, Color color, int count) {
+    return Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '$label ($count)',
+          style: GoogleFonts.poppins(fontSize: 12),
+        ),
       ],
     );
   }
