@@ -212,107 +212,104 @@ class _ManageAdvertisementsScreenState extends State<ManageAdvertisementsScreen>
       String adId, Map<String, dynamic> adData, bool isExpired) {
     final expiryDate = (adData['expiryDate'] as Timestamp).toDate();
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(
-          color: Theme.of(context).dividerColor.withOpacity(0.1),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Ad Image
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-            child: Image.network(
-              adData['imageUrl'] ?? 'https://via.placeholder.com/400x200',
-              height: 120,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
+    return InkWell(
+      onTap: () => _showAdDetails(adData),
+      child: Card(
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(
+            color: Theme.of(context).dividerColor.withOpacity(0.1),
           ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    adData['title'] ?? 'No Title',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Ad Image
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(8)),
+              child: Image.network(
+                adData['imageUrl'] ?? 'https://via.placeholder.com/400x200',
+                height: 120,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      adData['title'] ?? 'No Title',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    adData['description'] ?? 'No Description',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: Colors.grey[600],
-                    ),
-                    maxLines: 5,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const Spacer(),
-                  Row(
-                    children: [
-                      Icon(
-                        LineIcons.calendar,
-                        size: 12,
+                    const SizedBox(height: 2),
+                    Text(
+                      adData['description'] ?? 'No Description',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
                         color: Colors.grey[600],
                       ),
-                      Text(
-                        'Expires on: ',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        Icon(
+                          LineIcons.calendar,
+                          size: 12,
                           color: Colors.grey[600],
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        DateFormat('MMM d').format(expiryDate),
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: isExpired ? Colors.red : Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (!isExpired) ...[
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Transform.scale(
-                          scale: 0.8,
-                          child: Switch(
-                            value: adData['isActive'] ?? false,
-                            onChanged: (value) {
-                              _adminService.toggleAdvertisementStatus(
-                                  adId, value);
-                            },
+                        const SizedBox(width: 4),
+                        Text(
+                          DateFormat('MMM d').format(expiryDate),
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: isExpired ? Colors.red : Colors.grey[600],
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(LineIcons.trash,
-                              color: Colors.red, size: 16),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          onPressed: () => _showDeleteDialog(adId),
                         ),
                       ],
                     ),
+                    if (!isExpired) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Transform.scale(
+                            scale: 0.8,
+                            child: Switch(
+                              value: adData['isActive'] ?? false,
+                              onChanged: (value) {
+                                _adminService.toggleAdvertisementStatus(
+                                    adId, value);
+                              },
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(LineIcons.trash,
+                                color: Colors.red, size: 16),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () => _showDeleteDialog(adId),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -345,6 +342,170 @@ class _ManageAdvertisementsScreenState extends State<ManageAdvertisementsScreen>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showAdDetails(Map<String, dynamic> adData) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(24),
+        child: Container(
+          constraints: BoxConstraints(
+            maxWidth: 800,
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header with close button
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Theme.of(context).dividerColor.withOpacity(0.1),
+                    ),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Advertisement Details',
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(LineIcons.times),
+                      onPressed: () => Navigator.pop(context),
+                      tooltip: 'Close',
+                    ),
+                  ],
+                ),
+              ),
+              // Ad content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Image
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          adData['imageUrl'] ??
+                              'https://via.placeholder.com/400x200',
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      // Title
+                      Text(
+                        adData['title'] ?? 'No Title',
+                        style: GoogleFonts.poppins(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Status and expiry date
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: adData['isActive'] == true
+                                  ? Colors.green.withOpacity(0.1)
+                                  : Colors.red.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              adData['isActive'] == true
+                                  ? 'Active'
+                                  : 'Inactive',
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: adData['isActive'] == true
+                                    ? Colors.green
+                                    : Colors.red,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Icon(
+                            LineIcons.calendar,
+                            size: 16,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Expires on: ${DateFormat('MMM d, yyyy').format((adData['expiryDate'] as Timestamp).toDate())}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      // Description
+                      Text(
+                        'Description',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        adData['description'] ?? 'No description available',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                          height: 1.5,
+                        ),
+                      ),
+                      if (adData['link'] != null) ...[
+                        const SizedBox(height: 24),
+                        Text(
+                          'Advertisement Link',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          adData['link'],
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Theme.of(context).colorScheme.primary,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
