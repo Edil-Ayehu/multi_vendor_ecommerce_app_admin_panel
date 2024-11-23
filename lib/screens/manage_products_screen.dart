@@ -18,6 +18,8 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
   String? selectedProductId;
   String? selectedCategory;
   int currentImageIndex = 0;
+  int currentPage = 1;
+  final int productsPerPage = 25;
 
   @override
   Widget build(BuildContext context) {
@@ -59,9 +61,28 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final products = snapshot.data!.docs;
+          final allProducts = snapshot.data!.docs;
 
-          if (products.isEmpty) {
+          // Filter products based on category
+          final filteredProducts = allProducts.where((doc) {
+            if (selectedCategory == null) return true;
+            final productData = doc.data() as Map<String, dynamic>;
+            return productData['category'] == selectedCategory;
+          }).toList();
+
+          // Calculate pagination values
+          final totalProducts = filteredProducts.length;
+          final totalPages = (totalProducts / productsPerPage).ceil();
+          final startIndex = (currentPage - 1) * productsPerPage;
+          final endIndex = startIndex + productsPerPage > totalProducts
+              ? totalProducts
+              : startIndex + productsPerPage;
+
+          // Get current page products
+          final currentPageProducts =
+              filteredProducts.sublist(startIndex, endIndex);
+
+          if (filteredProducts.isEmpty) {
             return const Center(child: Text('No products found'));
           }
 
@@ -83,7 +104,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                       value: selectedCategory,
                       hint: const Text('Filter by Category'),
                       isExpanded: true,
-                      items: _getUniqueCategories(products).map((category) {
+                      items: _getUniqueCategories(allProducts).map((category) {
                         return DropdownMenuItem(
                           value: category == 'All' ? null : category,
                           child: Text(category),
@@ -108,24 +129,91 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
                   ),
-                  itemCount: products.where((doc) {
-                    if (selectedCategory == null) return true;
-                    final productData = doc.data() as Map<String, dynamic>;
-                    return productData['category'] == selectedCategory;
-                  }).length,
+                  itemCount: currentPageProducts.length,
                   itemBuilder: (context, index) {
-                    final filteredProducts = products.where((doc) {
-                      if (selectedCategory == null) return true;
-                      final productData = doc.data() as Map<String, dynamic>;
-                      return productData['category'] == selectedCategory;
-                    }).toList();
-                    final productData =
-                        filteredProducts[index].data() as Map<String, dynamic>;
+                    final productData = currentPageProducts[index].data()
+                        as Map<String, dynamic>;
                     return _buildProductCard(
-                        filteredProducts[index].id, productData);
+                        currentPageProducts[index].id, productData);
                   },
                 ),
               ),
+              // Pagination Controls
+              if (totalPages > 1)
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(
+                        color: Theme.of(context).dividerColor.withOpacity(0.1),
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Previous Page Button
+                      IconButton(
+                        icon: const Icon(Icons.chevron_left),
+                        onPressed: currentPage > 1
+                            ? () => setState(() => currentPage--)
+                            : null,
+                        tooltip: 'Previous page',
+                      ),
+
+                      // Page Numbers
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (int i = 1; i <= totalPages; i++)
+                            if (i == 1 ||
+                                i == totalPages ||
+                                (i >= currentPage - 1 && i <= currentPage + 1))
+                              Container(
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 4),
+                                child: TextButton(
+                                  onPressed: () =>
+                                      setState(() => currentPage = i),
+                                  style: TextButton.styleFrom(
+                                    backgroundColor: currentPage == i
+                                        ? Theme.of(context).colorScheme.primary
+                                        : null,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12),
+                                    minimumSize: const Size(32, 32),
+                                  ),
+                                  child: Text(
+                                    '$i',
+                                    style: TextStyle(
+                                      color: currentPage == i
+                                          ? Colors.white
+                                          : null,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            else if (i == 2 || i == totalPages - 1)
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 4),
+                                child: Text('...',
+                                    style: TextStyle(color: Colors.grey[600])),
+                              ),
+                        ],
+                      ),
+
+                      // Next Page Button
+                      IconButton(
+                        icon: const Icon(Icons.chevron_right),
+                        onPressed: currentPage < totalPages
+                            ? () => setState(() => currentPage++)
+                            : null,
+                        tooltip: 'Next page',
+                      ),
+                    ],
+                  ),
+                ),
             ],
           );
         },
