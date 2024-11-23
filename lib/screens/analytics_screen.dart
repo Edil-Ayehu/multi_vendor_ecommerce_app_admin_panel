@@ -62,7 +62,7 @@ class AnalyticsScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                _buildSummaryCards(data),
+                _buildSummaryCards(data, context),
                 const SizedBox(height: 30),
                 _buildSectionTitle('Revenue Trend'),
                 AnimatedContainer(
@@ -115,83 +115,125 @@ class AnalyticsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryCards(Map<String, dynamic> data) {
+  Widget _buildSummaryCards(Map<String, dynamic> data, BuildContext context) {
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
+      crossAxisCount: MediaQuery.of(context).size.width < 600 ? 2 : 4,
       crossAxisSpacing: 16,
       mainAxisSpacing: 16,
       childAspectRatio: 1.5,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       children: [
         _buildStatCard(
           'Total Users',
           data['totalUsers'].toString(),
-          Icons.people_rounded,
-          const Color(0xFF6C63FF),
+          Icons.people_alt_rounded,
+          const Color(0xFF6366F1), // Indigo
+          context,
         ),
         _buildStatCard(
           'Total Products',
           data['totalProducts'].toString(),
-          Icons.shopping_bag_rounded,
-          const Color(0xFF4CAF50),
+          Icons.inventory_2_rounded,
+          const Color(0xFF0EA5E9), // Sky blue
+          context,
         ),
         _buildStatCard(
           'Total Orders',
           data['totalOrders'].toString(),
-          Icons.shopping_cart_rounded,
-          const Color(0xFFFFA726),
+          Icons.shopping_bag_rounded,
+          const Color(0xFF10B981), // Emerald
+          context,
         ),
         _buildStatCard(
           'Revenue',
           '\$${NumberFormat('#,##0.00').format(data['totalRevenue'])}',
           Icons.attach_money_rounded,
-          const Color(0xFFE91E63),
+          const Color(0xFFF59E0B), // Amber
+          context,
         ),
       ],
     );
   }
 
-  Widget _buildStatCard(
-      String title, String value, IconData icon, Color color) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 500),
-      builder: (context, opacity, child) {
-        return Opacity(
-          opacity: opacity,
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
+  Widget _buildStatCard(String title, String value, IconData icon, Color color,
+      BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: color.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Background Icon
+          Positioned(
+            right: -10,
+            bottom: -10,
+            child: Icon(
+              icon,
+              size: 80,
               color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: color.withOpacity(0.2)),
             ),
+          ),
+          // Content
+          Padding(
+            padding: const EdgeInsets.all(16),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(icon, color: color, size: 32),
-                const SizedBox(height: 12),
+                // Icon and Title
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        icon,
+                        color: color,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context)
+                              .textTheme
+                              .bodyLarge
+                              ?.color
+                              ?.withOpacity(0.7),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                // Value
                 Text(
                   value,
                   style: GoogleFonts.poppins(
-                    fontSize: 20,
+                    fontSize: 24,
                     fontWeight: FontWeight.w600,
                     color: color,
-                  ),
-                ),
-                Text(
-                  title,
-                  style: GoogleFonts.poppins(
-                    color: color.withOpacity(0.8),
-                    fontSize: 14,
                   ),
                 ),
               ],
             ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
