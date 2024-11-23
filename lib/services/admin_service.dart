@@ -351,4 +351,35 @@ class AdminService {
       };
     }
   }
+
+  Future<Map<String, int>> getProductCategoryDistribution() async {
+    try {
+      final QuerySnapshot productsSnapshot = await _firestore.collection('products').get();
+      
+      Map<String, int> categoryCount = {
+        'Electronics': 0,
+        'Fashion': 0,
+        'Home & Garden': 0,
+        'Furnitures': 0,
+        'Beauty & Personal Care': 0,
+        'Toys & Games': 0,
+        'Books & Stationery': 0,
+        'Food & Beverages': 0,
+        'Automobiles': 0,
+        'Sports': 0,
+        'Others': 0,
+      };
+
+      for (var doc in productsSnapshot.docs) {
+        final productData = doc.data() as Map<String, dynamic>;
+        final category = productData['category'] as String? ?? 'Others';
+        categoryCount[category] = (categoryCount[category] ?? 0) + 1;
+      }
+
+      return categoryCount;
+    } catch (e) {
+      print('Error getting product category distribution: $e');
+      return {};
+    }
+  }
 }
