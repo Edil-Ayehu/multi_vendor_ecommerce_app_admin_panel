@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/services/admin_service.dart';
-import 'package:multi_vendor_ecommerce_app_admin_panel/widgets/dotted_divider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:line_icons/line_icons.dart';
 

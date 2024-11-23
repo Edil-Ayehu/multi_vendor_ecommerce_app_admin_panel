@@ -18,6 +18,9 @@ class _ManageAdvertisementsScreenState extends State<ManageAdvertisementsScreen>
   final AdminService _adminService = AdminService();
   late TabController _tabController;
   String? selectedAdId;
+  int currentImageIndex = 0;
+  int currentPage = 1;
+  final int adsPerPage = 25;
 
   @override
   void initState() {
@@ -136,6 +139,12 @@ class _ManageAdvertisementsScreenState extends State<ManageAdvertisementsScreen>
           final expiredAds = allAds.where((ad) {
             final adData = ad.data() as Map<String, dynamic>;
             final expiryDate = (adData['expiryDate'] as Timestamp).toDate();
+            final isExpired = expiryDate.isBefore(DateTime.now());
+
+            if (isExpired && adData['isActive'] == true) {
+              _adminService.toggleAdvertisementStatus(ad.id, false);
+            }
+
             return expiryDate.isBefore(DateTime.now()) ||
                 adData['isActive'] == false;
           }).toList();
@@ -192,25 +201,115 @@ class _ManageAdvertisementsScreenState extends State<ManageAdvertisementsScreen>
       return 2;
     }
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(12),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: getCrossAxisCount(),
-        childAspectRatio: 0.7,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-      ),
-      itemCount: ads.length,
-      itemBuilder: (context, index) {
-        final adData = ads[index].data() as Map<String, dynamic>;
-        return _buildAdCard(ads[index].id, adData, isExpired);
-      },
+    // Calculate pagination values
+    final totalAds = ads.length;
+    final totalPages = (totalAds / adsPerPage).ceil();
+    final startIndex = (currentPage - 1) * adsPerPage;
+    final endIndex =
+        startIndex + adsPerPage > totalAds ? totalAds : startIndex + adsPerPage;
+
+    // Get current page ads
+    final currentPageAds = ads.sublist(startIndex, endIndex);
+
+    return Column(
+      children: [
+        // Ads Grid
+        Expanded(
+          child: GridView.builder(
+            padding: const EdgeInsets.all(12),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: getCrossAxisCount(),
+              childAspectRatio: 0.7,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+            ),
+            itemCount: currentPageAds.length,
+            itemBuilder: (context, index) {
+              final adData =
+                  currentPageAds[index].data() as Map<String, dynamic>;
+              return _buildAdCard(currentPageAds[index].id, adData, isExpired);
+            },
+          ),
+        ),
+        // Pagination Controls
+        if (totalPages > 1)
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                ),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Previous Page Button
+                IconButton(
+                  icon: const Icon(Icons.chevron_left),
+                  onPressed: currentPage > 1
+                      ? () => setState(() => currentPage--)
+                      : null,
+                  tooltip: 'Previous page',
+                ),
+
+                // Page Numbers
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (int i = 1; i <= totalPages; i++)
+                      if (i == 1 ||
+                          i == totalPages ||
+                          (i >= currentPage - 1 && i <= currentPage + 1))
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          child: TextButton(
+                            onPressed: () => setState(() => currentPage = i),
+                            style: TextButton.styleFrom(
+                              backgroundColor: currentPage == i
+                                  ? Theme.of(context).colorScheme.primary
+                                  : null,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              minimumSize: const Size(32, 32),
+                            ),
+                            child: Text(
+                              '$i',
+                              style: TextStyle(
+                                color: currentPage == i ? Colors.white : null,
+                              ),
+                            ),
+                          ),
+                        )
+                      else if (i == 2 || i == totalPages - 1)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Text('...',
+                              style: TextStyle(color: Colors.grey[600])),
+                        ),
+                  ],
+                ),
+
+                // Next Page Button
+                IconButton(
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: currentPage < totalPages
+                      ? () => setState(() => currentPage++)
+                      : null,
+                  tooltip: 'Next page',
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 
   Widget _buildAdCard(
       String adId, Map<String, dynamic> adData, bool isExpired) {
     final expiryDate = (adData['expiryDate'] as Timestamp).toDate();
+    final isExpiredAd = expiryDate.isBefore(DateTime.now());
 
     return InkWell(
       onTap: () => _showAdDetails(adData),
@@ -255,10 +354,10 @@ class _ManageAdvertisementsScreenState extends State<ManageAdvertisementsScreen>
                     Text(
                       adData['description'] ?? 'No Description',
                       style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: Colors.grey[600],
+                        fontSize: 12,
+                        color: Colors.grey.shade500,
                       ),
-                      maxLines: 2,
+                      maxLines: 4,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const Spacer(),
@@ -288,10 +387,12 @@ class _ManageAdvertisementsScreenState extends State<ManageAdvertisementsScreen>
                             scale: 0.8,
                             child: Switch(
                               value: adData['isActive'] ?? false,
-                              onChanged: (value) {
-                                _adminService.toggleAdvertisementStatus(
-                                    adId, value);
-                              },
+                              onChanged: isExpiredAd
+                                  ? null // Disable switch if ad is expired
+                                  : (value) {
+                                      _adminService.toggleAdvertisementStatus(
+                                          adId, value);
+                                    },
                             ),
                           ),
                           IconButton(
