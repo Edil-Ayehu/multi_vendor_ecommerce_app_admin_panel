@@ -590,98 +590,196 @@ class AnalyticsScreen extends StatelessWidget {
         }
 
         final data = snapshot.data!;
-        final total =
-            data.values.fold<int>(0, (sum, count) => sum + (count ?? 0));
+        final total = data.values.fold<int>(0, (sum, value) => sum + value);
 
         if (total == 0) {
           return const Center(child: Text('No order status data available'));
         }
 
         return Container(
-          height: 200,
-          padding: const EdgeInsets.all(16),
+          height: 400,
+          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                spreadRadius: 2,
-                blurRadius: 5,
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Order Status Distribution',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: PieChart(
-                  PieChartData(
-                    sectionsSpace: 0,
-                    centerSpaceRadius: 40,
-                    sections: [
-                      if ((data['pending'] ?? 0) > 0)
-                        PieChartSectionData(
-                          color: Colors.orange,
-                          value: (data['pending'] ?? 0).toDouble(),
-                          title:
-                              '${(((data['pending'] ?? 0) / total) * 100).toStringAsFixed(1)}%',
-                          radius: 50,
-                          titleStyle: const TextStyle(color: Colors.white),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Order Status',
+                        style: GoogleFonts.poppins(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
                         ),
-                      if ((data['shipped'] ?? 0) > 0)
-                        PieChartSectionData(
-                          color: Colors.blue,
-                          value: (data['shipped'] ?? 0).toDouble(),
-                          title:
-                              '${(((data['shipped'] ?? 0) / total) * 100).toStringAsFixed(1)}%',
-                          radius: 50,
-                          titleStyle: const TextStyle(color: Colors.white),
+                      ),
+                      Text(
+                        'Total Orders: $total',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: Colors.grey[600],
                         ),
-                      if ((data['delivered'] ?? 0) > 0)
-                        PieChartSectionData(
-                          color: Colors.green,
-                          value: (data['delivered'] ?? 0).toDouble(),
-                          title:
-                              '${(((data['delivered'] ?? 0) / total) * 100).toStringAsFixed(1)}%',
-                          radius: 50,
-                          titleStyle: const TextStyle(color: Colors.white),
-                        ),
-                      if ((data['cancelled'] ?? 0) > 0)
-                        PieChartSectionData(
-                          color: Colors.red,
-                          value: (data['cancelled'] ?? 0).toDouble(),
-                          title:
-                              '${(((data['cancelled'] ?? 0) / total) * 100).toStringAsFixed(1)}%',
-                          radius: 50,
-                          titleStyle: const TextStyle(color: Colors.white),
-                        ),
+                      ),
                     ],
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildLegendItem('Pending', Colors.orange),
-                  _buildLegendItem('Shipped', Colors.blue),
-                  _buildLegendItem('Delivered', Colors.green),
-                  _buildLegendItem('Cancelled', Colors.red),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.refresh, size: 16, color: Colors.grey[600]),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Real-time',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
+              ),
+              const SizedBox(height: 30),
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: PieChart(
+                        PieChartData(
+                          sectionsSpace: 2,
+                          centerSpaceRadius: 50,
+                          sections: [
+                            _buildOrderSection(
+                                'Pending', data, total, Colors.orange),
+                            _buildOrderSection(
+                                'Shipped', data, total, Colors.blue),
+                            _buildOrderSection(
+                                'Delivered', data, total, Colors.green),
+                            _buildOrderSection(
+                                'Cancelled', data, total, Colors.red),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 40),
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildOrderLegendItem('Pending', data['pending'] ?? 0,
+                              total, Colors.orange),
+                          const SizedBox(height: 16),
+                          _buildOrderLegendItem('Shipped', data['shipped'] ?? 0,
+                              total, Colors.blue),
+                          const SizedBox(height: 16),
+                          _buildOrderLegendItem('Delivered',
+                              data['delivered'] ?? 0, total, Colors.green),
+                          const SizedBox(height: 16),
+                          _buildOrderLegendItem('Cancelled',
+                              data['cancelled'] ?? 0, total, Colors.red),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  PieChartSectionData _buildOrderSection(
+      String status, Map<String, int> data, int total, Color color) {
+    final value = (data[status.toLowerCase()] ?? 0).toDouble();
+    final percentage = total > 0 ? (value / total * 100) : 0;
+
+    return PieChartSectionData(
+      color: color.withOpacity(0.8),
+      value: value,
+      title: percentage >= 5 ? '${percentage.toStringAsFixed(1)}%' : '',
+      radius: 60,
+      titleStyle: GoogleFonts.poppins(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: Colors.white,
+      ),
+      badgeWidget: percentage < 5 ? null : _buildBadge(color),
+      badgePositionPercentageOffset: 1.2,
+    );
+  }
+
+  Widget _buildBadge(Color color) {
+    return Container(
+      width: 8,
+      height: 8,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 1),
+      ),
+    );
+  }
+
+  Widget _buildOrderLegendItem(
+      String status, int count, int total, Color color) {
+    final percentage = total > 0 ? (count / total * 100) : 0;
+
+    return Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.8),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                status,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                '$count orders (${percentage.toStringAsFixed(1)}%)',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
