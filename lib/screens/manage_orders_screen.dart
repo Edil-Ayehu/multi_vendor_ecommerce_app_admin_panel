@@ -7,6 +7,7 @@ import 'package:line_icons/line_icons.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/services/admin_service.dart';
 import 'package:collection/collection.dart';
 import 'dart:math' show min;
+import 'package:shimmer/shimmer.dart';
 
 class ManageOrdersScreen extends StatefulWidget {
   const ManageOrdersScreen({super.key});
@@ -45,43 +46,50 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
     'cancelled': 1,
   };
 
+  // Add a cache for filtered orders
+  final Map<String?, List<DocumentSnapshot>> _filteredOrdersCache = {};
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 6, vsync: this);
-    _tabController.addListener(() {
-      setState(() {
-        // Don't reset the page when changing tabs
-        currentPage =
-            _currentPages[_getStatusForIndex(_tabController.index)] ?? 1;
-      });
-    });
+    _tabController.addListener(_handleTabChange);
   }
 
-  // Helper method to get status for tab index
-  String? _getStatusForIndex(int index) {
-    switch (index) {
-      case 0:
-        return null; // All orders
-      case 1:
-        return 'pending';
-      case 2:
-        return 'processing';
-      case 3:
-        return 'shipped';
-      case 4:
-        return 'delivered';
-      case 5:
-        return 'cancelled';
-      default:
-        return null;
+  // Add this new method to handle tab changes
+  void _handleTabChange() {
+    if (_tabController.indexIsChanging) {
+      setState(() {
+        String? newStatus = _getStatusForIndex(_tabController.index);
+        currentPage = _currentPages[newStatus] ?? 1;
+        selectedOrderId = null;
+        // Clear the cache when switching tabs
+        _filteredOrdersCache.clear();
+      });
     }
   }
 
+  // Update the method to close order details
+  void _closeOrderDetails() {
+    setState(() {
+      selectedOrderId = null;
+      // Clear the cache to refresh the list
+      _filteredOrdersCache.clear();
+      // Reset current page
+      String? currentStatus = _getStatusForIndex(_tabController.index);
+      currentPage = _currentPages[currentStatus] ?? 1;
+    });
+  }
+
+  // Update the _updatePage method
   void _updatePage(int newPage, String? status) {
+    if (newPage < 1) return;
     setState(() {
       _currentPages[status] = newPage;
       currentPage = newPage;
+      selectedOrderId = null;
+      // Clear cache when changing pages
+      _filteredOrdersCache.clear();
     });
   }
 
@@ -89,6 +97,26 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  // Add a method to filter orders with caching
+  List<DocumentSnapshot> _getFilteredOrders(List<DocumentSnapshot> orders, String? status) {
+    // Return cached results if available
+    if (_filteredOrdersCache.containsKey(status)) {
+      return _filteredOrdersCache[status]!;
+    }
+
+    // Filter orders and cache the results
+    final filteredOrders = status != null
+        ? orders.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return (data['status'] ?? 'pending').toLowerCase() ==
+                status.toLowerCase();
+          }).toList()
+        : orders;
+
+    _filteredOrdersCache[status] = filteredOrders;
+    return filteredOrders;
   }
 
   @override
@@ -166,16 +194,18 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
           }
 
           if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return _buildShimmerOrdersView(
+                MediaQuery.of(context).size.width < 600);
           }
 
-          // Store orders in a variable to maintain consistency
+          // Clear cache when new data arrives
+          _filteredOrdersCache.clear();
+          
           final allOrders = snapshot.data!.docs;
-
           return TabBarView(
             controller: _tabController,
             children: [
-              _buildOrdersView(allOrders, null, isSmallScreen), // All orders
+              _buildOrdersView(allOrders, null, isSmallScreen),
               _buildOrdersView(allOrders, 'pending', isSmallScreen),
               _buildOrdersView(allOrders, 'processing', isSmallScreen),
               _buildOrdersView(allOrders, 'shipped', isSmallScreen),
@@ -249,14 +279,8 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
 
   Widget _buildOrdersView(
       List<DocumentSnapshot> orders, String? status, bool isSmallScreen) {
-    // Filter orders based on status
-    final filteredOrders = status != null
-        ? orders.where((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            return (data['status'] ?? 'pending').toLowerCase() ==
-                status.toLowerCase();
-          }).toList()
-        : orders;
+    // Use cached filtered orders
+    final filteredOrders = _getFilteredOrders(orders, status);
 
     if (filteredOrders.isEmpty) {
       return Center(
@@ -285,10 +309,30 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
     // Calculate pagination values
     final totalOrders = filteredOrders.length;
     final totalPages = (totalOrders / ordersPerPage).ceil();
-    final currentPageForStatus = _currentPages[status] ?? 1;
+    
+    // Get current page for this status
+    int currentPageForStatus = _currentPages[status] ?? 1;
+    
+    // Ensure current page is valid
+    if (currentPageForStatus > totalPages) {
+      currentPageForStatus = totalPages;
+      _currentPages[status] = totalPages;
+    }
 
+    // Calculate start and end indices
     final startIndex = (currentPageForStatus - 1) * ordersPerPage;
     final endIndex = min(startIndex + ordersPerPage, totalOrders);
+
+    // Safety check for indices
+    if (startIndex >= totalOrders) {
+      // If start index is beyond total orders, reset to first page
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _updatePage(1, status);
+      });
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    // Get current page orders
     final currentPageOrders = filteredOrders.sublist(startIndex, endIndex);
 
     return Column(
@@ -298,18 +342,15 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
           child: Row(
             children: [
               if (selectedOrderId != null && isSmallScreen)
-                // Full screen details for small screens
                 Expanded(
                   child: _buildOrderDetailsView(filteredOrders),
                 )
               else
-                // Normal layout
                 Expanded(
                   flex: 3,
                   child: _buildOrdersList(currentPageOrders),
                 ),
 
-              // Show details panel only on larger screens
               if (selectedOrderId != null && !isSmallScreen) ...[
                 Container(width: 1, color: Colors.grey[300]),
                 Expanded(
@@ -320,7 +361,6 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
             ],
           ),
         ),
-        // Show pagination only when order list is visible
         if (totalPages > 1 && (selectedOrderId == null || !isSmallScreen))
           Container(
             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -337,7 +377,9 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
                 IconButton(
                   icon: const Icon(Icons.chevron_left),
                   onPressed: currentPageForStatus > 1
-                      ? () => _updatePage(currentPageForStatus - 1, status)
+                      ? () {
+                          _updatePage(currentPageForStatus - 1, status);
+                        }
                       : null,
                 ),
                 const SizedBox(width: 16),
@@ -349,7 +391,9 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
                 IconButton(
                   icon: const Icon(Icons.chevron_right),
                   onPressed: currentPageForStatus < totalPages
-                      ? () => _updatePage(currentPageForStatus + 1, status)
+                      ? () {
+                          _updatePage(currentPageForStatus + 1, status);
+                        }
                       : null,
                 ),
               ],
@@ -366,7 +410,7 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
         backgroundColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(LineIcons.arrowLeft, color: Colors.black),
-          onPressed: () => setState(() => selectedOrderId = null),
+          onPressed: _closeOrderDetails,
         ),
         title: Text(
           'Order Details',
@@ -561,7 +605,7 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
                 ),
                 IconButton(
                   icon: const Icon(LineIcons.times),
-                  onPressed: () => setState(() => selectedOrderId = null),
+                  onPressed: _closeOrderDetails,
                   tooltip: 'Close details',
                 ),
               ],
@@ -923,5 +967,112 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
         size: 24,
       ),
     );
+  }
+
+  Widget _buildShimmerOrdersView(bool isSmallScreen) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: GridView.builder(
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 400,
+          mainAxisExtent: 160,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+        ),
+        itemCount: 6,
+        itemBuilder: (context, index) => Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: Theme.of(context).dividerColor.withOpacity(0.1),
+            ),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 120,
+                            height: 20,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            width: 80,
+                            height: 16,
+                            color: Colors.white,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                Container(
+                  width: 140,
+                  height: 16,
+                  color: Colors.white,
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 16,
+                      color: Colors.white,
+                    ),
+                    Container(
+                      width: 80,
+                      height: 16,
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Add this helper method to get status for tab index
+  String? _getStatusForIndex(int index) {
+    switch (index) {
+      case 0:
+        return null; // All orders
+      case 1:
+        return 'pending';
+      case 2:
+        return 'processing';
+      case 3:
+        return 'shipped';
+      case 4:
+        return 'delivered';
+      case 5:
+        return 'cancelled';
+      default:
+        return null;
+    }
   }
 }
