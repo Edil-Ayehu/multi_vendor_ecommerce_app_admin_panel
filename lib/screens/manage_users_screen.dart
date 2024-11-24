@@ -335,9 +335,134 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
           width: 1,
         ),
       ),
-      child: InkWell(
-        onTap: () => setState(() => selectedUserId = userId),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color.fromARGB(255, 40, 98, 139).withOpacity(0.3),
+              Colors.white,
+            ],
+          ),
+        ),
+        child: InkWell(
+          onTap: () => setState(() => selectedUserId = userId),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundImage: NetworkImage(
+                        userData['profileImage'] ??
+                            'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y',
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: isBlocked ? Colors.red : Colors.green,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Theme.of(context).scaffoldBackgroundColor,
+                            width: 2,
+                          ),
+                        ),
+                        child: Icon(
+                          isBlocked ? Icons.block : Icons.check,
+                          size: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  userData['fullName'] ?? 'N/A',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  userData['email'] ?? 'N/A',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.color
+                        ?.withOpacity(0.7),
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Customer',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: Colors.blue,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVendorCard(
+      BuildContext context, Map<String, dynamic> userData, String userId) {
+    final bool isBlocked = userData['isBlocked'] ?? false;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: Colors.grey.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.purple.shade100.withOpacity(0.3),
+              const Color.fromARGB(255, 236, 226, 239),
+            ],
+          ),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -406,125 +531,27 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
+                  color: Colors.purple.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  'Customer',
+                  'Vendor',
                   style: GoogleFonts.poppins(
                     fontSize: 12,
-                    color: Colors.blue,
+                    color: Colors.purple,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
+              const SizedBox(height: 8),
+              Switch.adaptive(
+                value: !isBlocked,
+                activeColor: Theme.of(context).colorScheme.primary,
+                onChanged: (value) =>
+                    _adminService.toggleUserStatus(userId, !value),
+              ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildVendorCard(
-      BuildContext context, Map<String, dynamic> userData, String userId) {
-    final bool isBlocked = userData['isBlocked'] ?? false;
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: Colors.grey.withOpacity(0.1),
-          width: 1,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                CircleAvatar(
-                  radius: 40,
-                  backgroundImage: NetworkImage(
-                    userData['profileImage'] ??
-                        'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y',
-                  ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: isBlocked ? Colors.red : Colors.green,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Theme.of(context).scaffoldBackgroundColor,
-                        width: 2,
-                      ),
-                    ),
-                    child: Icon(
-                      isBlocked ? Icons.block : Icons.check,
-                      size: 12,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              userData['fullName'] ?? 'N/A',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              userData['email'] ?? 'N/A',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.color
-                    ?.withOpacity(0.7),
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.purple.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                'Vendor',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: Colors.purple,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Switch.adaptive(
-              value: !isBlocked,
-              activeColor: Theme.of(context).colorScheme.primary,
-              onChanged: (value) =>
-                  _adminService.toggleUserStatus(userId, !value),
-            ),
-          ],
         ),
       ),
     );
