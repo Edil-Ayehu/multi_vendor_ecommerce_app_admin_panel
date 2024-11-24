@@ -8,6 +8,8 @@ import 'package:line_icons/line_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/widgets/admin_drawer.dart';
+import 'dart:ui' show Color;
+import 'package:timeago/timeago.dart' as timeago;
 
 class AdminDashboardScreen extends StatelessWidget {
   final AdminService _adminService = AdminService();
@@ -85,8 +87,8 @@ class AdminDashboardScreen extends StatelessWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           crossAxisCount: crossAxisCount,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
+          crossAxisSpacing: 24,
+          mainAxisSpacing: 24,
           childAspectRatio: constraints.maxWidth > 1200 ? 1.5 : 1.3,
           children: [
             _buildStatCard(
@@ -94,28 +96,40 @@ class AdminDashboardScreen extends StatelessWidget {
               'Total Users',
               data['totalUsers'].toString(),
               LineIcons.users,
-              Colors.blue,
+              [
+                const Color(0xFF4158D0),
+                const Color(0xFFC850C0)
+              ], // Purple-Pink gradient
             ),
             _buildStatCard(
               context,
               'Total Products',
               data['totalProducts'].toString(),
               LineIcons.shoppingBag,
-              Colors.green,
+              [
+                const Color(0xFF43E97B),
+                const Color(0xFF38F9D7)
+              ], // Green-Cyan gradient
             ),
             _buildStatCard(
               context,
               'Total Orders',
               data['totalOrders'].toString(),
               LineIcons.shoppingCart,
-              Colors.orange,
+              [
+                const Color(0xFFFA709A),
+                const Color(0xFFFF9472)
+              ], // Pink-Orange gradient
             ),
             _buildStatCard(
               context,
               'Revenue',
               '\$${data['totalRevenue'].toString()}',
               LineIcons.moneyBill,
-              Colors.purple,
+              [
+                const Color(0xFF21D4FD),
+                const Color(0xFFB721FF)
+              ], // Blue-Purple gradient
             ),
           ],
         );
@@ -148,16 +162,25 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(BuildContext context, String title, String value,
-      IconData icon, Color color) {
+  Widget _buildStatCard(
+    BuildContext context,
+    String title,
+    String value,
+    IconData icon,
+    List<Color> gradientColors,
+  ) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradientColors,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: gradientColors[0].withOpacity(0.2),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -170,10 +193,10 @@ class AdminDashboardScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: color, size: 24),
+            child: Icon(icon, color: Colors.white, size: 24),
           ),
           const SizedBox(height: 16),
           Text(
@@ -181,17 +204,14 @@ class AdminDashboardScreen extends StatelessWidget {
             style: GoogleFonts.poppins(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: Theme.of(context).textTheme.titleLarge?.color,
+              color: Colors.white,
             ),
           ),
           Text(
             title,
             style: GoogleFonts.poppins(
-              color: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.color
-                  ?.withOpacity(0.7),
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 14,
             ),
           ),
         ],
@@ -218,9 +238,17 @@ class AdminDashboardScreen extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                TextButton.icon(
-                  icon: const Icon(LineIcons.angleRight, size: 18),
-                  label: const Text('View All'),
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    side: BorderSide(
+                      color: Theme.of(context).primaryColor,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('View All'),
                   onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -253,22 +281,34 @@ class AdminDashboardScreen extends StatelessWidget {
                   separatorBuilder: (_, __) => const DottedDivider(),
                   itemBuilder: (context, index) {
                     final order = orders[index].data() as Map<String, dynamic>;
+                    final orderTime =
+                        (order['createdAt'] as Timestamp).toDate();
+                    final status = order['status'] as String? ?? 'pending';
+
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        'Order #${orders[index].id.substring(0, 8)}',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                      title: Row(
+                        children: [
+                          Text(
+                            'Order #${orders[index].id.substring(0, 8)}',
+                            style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w500),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildStatusBadge(status),
+                        ],
                       ),
                       subtitle: Text(
-                        DateFormat('MMM dd, yyyy').format(
-                          (order['createdAt'] as Timestamp).toDate(),
+                        'Ordered ${timeago.format(orderTime)}',
+                        style: GoogleFonts.poppins(
+                          color: Theme.of(context).textTheme.bodySmall?.color,
                         ),
-                        style: GoogleFonts.poppins(),
                       ),
                       trailing: Text(
                         '\$${order['total']?.toStringAsFixed(2)}',
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.w600,
+                          fontSize: 20,
                           color: Theme.of(context).primaryColor,
                         ),
                       ),
@@ -279,6 +319,63 @@ class AdminDashboardScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    final statusConfig = {
+      'pending': {
+        'color': Colors.orange,
+        'icon': LineIcons.hourglassStart,
+      },
+      'processing': {
+        'color': Colors.blue,
+        'icon': LineIcons.spinner,
+      },
+      'shipped': {
+        'color': Colors.indigo,
+        'icon': LineIcons.shippingFast,
+      },
+      'delivered': {
+        'color': Colors.green,
+        'icon': LineIcons.checkCircle,
+      },
+      'cancelled': {
+        'color': Colors.red,
+        'icon': LineIcons.timesCircle,
+      },
+    };
+
+    final config =
+        statusConfig[status.toLowerCase()] ?? statusConfig['pending'];
+    final color = config!['color'] as Color;
+    final icon = config['icon'] as IconData;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: color,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            status.capitalize(),
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -302,9 +399,18 @@ class AdminDashboardScreen extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                TextButton.icon(
-                  icon: const Icon(LineIcons.angleRight, size: 18),
-                  label: const Text('View All'),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    side: BorderSide(
+                      color: Theme.of(context).primaryColor,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('View All',
+                      style: TextStyle(color: Colors.white)),
                   onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -337,6 +443,9 @@ class AdminDashboardScreen extends StatelessWidget {
                   separatorBuilder: (_, __) => const DottedDivider(),
                   itemBuilder: (context, index) {
                     final user = users[index].data() as Map<String, dynamic>;
+                    final userTime = (user['createdAt'] as Timestamp).toDate();
+                    final userRole = user['role'] as String? ?? 'customer';
+
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: CircleAvatar(
@@ -345,13 +454,39 @@ class AdminDashboardScreen extends StatelessWidget {
                               'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y',
                         ),
                       ),
-                      title: Text(
-                        user['fullName'] ?? 'N/A',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                      title: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              user['fullName'] ?? 'N/A',
+                              style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w500),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildUserRoleBadge(userRole),
+                        ],
                       ),
-                      subtitle: Text(
-                        user['email'] ?? 'N/A',
-                        style: GoogleFonts.poppins(),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user['email'] ?? 'N/A',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Joined ${timeago.format(userTime)}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color:
+                                  Theme.of(context).textTheme.bodySmall?.color,
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   },
@@ -362,5 +497,59 @@ class AdminDashboardScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildUserRoleBadge(String role) {
+    final roleConfig = {
+      'admin': {
+        'color': Colors.purple,
+        'icon': LineIcons.userShield,
+      },
+      'vendor': {
+        'color': Colors.blue,
+        'icon': LineIcons.store,
+      },
+      'customer': {
+        'color': Colors.green,
+        'icon': LineIcons.user,
+      },
+    };
+
+    final config = roleConfig[role.toLowerCase()] ?? roleConfig['customer'];
+    final color = config!['color'] as Color;
+    final icon = config['icon'] as IconData;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: color,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            role.capitalize(),
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+extension StringExtension on String {
+  String capitalize() {
+    return "${this[0].toUpperCase()}${substring(1).toLowerCase()}";
   }
 }

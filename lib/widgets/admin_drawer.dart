@@ -86,7 +86,7 @@ class AdminDrawer extends StatelessWidget {
               );
             },
           ),
-          const Divider(),
+          const DottedDivider(),
           _buildDrawerItem(
             context,
             icon: LineIcons.alternateSignOut,
@@ -116,7 +116,11 @@ class AdminDrawer extends StatelessWidget {
           const CircleAvatar(
             radius: 30,
             backgroundColor: Colors.white,
-            child: Icon(LineIcons.userShield, size: 30),
+            child: Image(
+              image: AssetImage('assets/edil.JPG'),
+              width: 30,
+              height: 30,
+            ),
           ),
           const SizedBox(height: 10),
           Text(
