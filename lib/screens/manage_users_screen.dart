@@ -257,7 +257,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: _calculateCrossAxisCount(
                       MediaQuery.of(context).size.width),
-                  childAspectRatio: isSmallScreen ? 0.8 : 1.1,
+                  childAspectRatio: isSmallScreen ? 0.8 : 0.8,
                   crossAxisSpacing: isSmallScreen ? 8 : 16,
                   mainAxisSpacing: isSmallScreen ? 8 : 16,
                 ),
