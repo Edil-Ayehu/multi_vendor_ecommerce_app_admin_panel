@@ -13,9 +13,23 @@ class AdminDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Drawer(
       child: Container(
-        color: Theme.of(context).colorScheme.surface,
+        decoration: BoxDecoration(
+          color: isDarkMode 
+              ? const Color(0xFF1A1A1A) // Dark background
+              : Theme.of(context).colorScheme.surface,
+          gradient: isDarkMode ? LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFF1A1A1A),
+              const Color(0xFF2D2D2D),
+            ],
+          ) : null,
+        ),
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
@@ -108,17 +122,29 @@ class AdminDrawer extends StatelessWidget {
   }
 
   Widget _buildDrawerHeader(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return DrawerHeader(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
+          colors: isDarkMode ? [
+            const Color(0xFF2E3192), // Dark mode primary
+            const Color(0xFF1BFFFF), // Dark mode secondary
+          ] : [
             Theme.of(context).primaryColor,
             Theme.of(context).primaryColor.withOpacity(0.8),
           ],
         ),
+        boxShadow: isDarkMode ? [
+          BoxShadow(
+            color: const Color(0xFF2E3192).withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ] : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,6 +158,13 @@ class AdminDrawer extends StatelessWidget {
                 color: Colors.white,
                 width: 1.5,
               ),
+              boxShadow: isDarkMode ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ] : null,
             ),
             child: const CircleAvatar(
               radius: 28,
@@ -178,26 +211,48 @@ class AdminDrawer extends StatelessWidget {
     required String title,
     required VoidCallback onTap,
   }) {
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: Theme.of(context).primaryColor,
-        size: 24,
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        gradient: isDarkMode ? LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            Colors.transparent,
+            Colors.white.withOpacity(0.05),
+          ],
+        ) : null,
       ),
-      title: Text(
-        title,
-        style: GoogleFonts.poppins(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
+      child: ListTile(
+        leading: Icon(
+          icon,
+          color: isDarkMode 
+              ? Theme.of(context).primaryColor.withOpacity(0.9)
+              : Theme.of(context).primaryColor,
+          size: 24,
         ),
+        title: Text(
+          title,
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: isDarkMode ? Colors.white.withOpacity(0.9) : null,
+          ),
+        ),
+        onTap: onTap,
+        dense: true,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        minLeadingWidth: 20,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        hoverColor: isDarkMode 
+            ? Colors.white.withOpacity(0.1)
+            : null,
       ),
-      onTap: onTap,
-      dense: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
-      minLeadingWidth: 20,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
   }
 
