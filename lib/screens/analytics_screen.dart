@@ -5,6 +5,7 @@ import 'package:multi_vendor_ecommerce_app_admin_panel/services/admin_service.da
 import 'dart:math' as math;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:shimmer/shimmer.dart';
 
 class AnalyticsScreen extends StatelessWidget {
   final AdminService _adminService = AdminService();
@@ -245,7 +246,11 @@ class AnalyticsScreen extends StatelessWidget {
         }
 
         if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return _buildShimmerContainer(
+            height: 300,
+            baseColor: Colors.grey[300]!,
+            highlightColor: Colors.grey[100]!,
+          );
         }
 
         final data = snapshot.data!;
@@ -428,7 +433,11 @@ class AnalyticsScreen extends StatelessWidget {
         }
 
         if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return _buildShimmerContainer(
+            height: 350,
+            baseColor: const Color(0xff203857).withOpacity(0.5),
+            highlightColor: const Color(0xff203857).withOpacity(0.3),
+          );
         }
 
         final data = snapshot.data!;
@@ -650,7 +659,11 @@ class AnalyticsScreen extends StatelessWidget {
         }
 
         if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return _buildShimmerContainer(
+            height: 400,
+            baseColor: Colors.grey[300]!,
+            highlightColor: Colors.grey[100]!,
+          );
         }
 
         final data = snapshot.data!;
@@ -856,7 +869,11 @@ class AnalyticsScreen extends StatelessWidget {
         }
 
         if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return _buildShimmerContainer(
+            height: 400,
+            baseColor: Colors.grey[300]!,
+            highlightColor: Colors.grey[100]!,
+          );
         }
 
         final data = snapshot.data!;
@@ -1097,7 +1114,11 @@ class AnalyticsScreen extends StatelessWidget {
         }
 
         if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return _buildShimmerContainer(
+            height: 400,
+            baseColor: const Color(0xff203857).withOpacity(0.5),
+            highlightColor: const Color(0xff203857).withOpacity(0.3),
+          );
         }
 
         final data = snapshot.data!;
@@ -1243,6 +1264,27 @@ class AnalyticsScreen extends StatelessWidget {
         const SizedBox(width: 4),
         Text(label, style: const TextStyle(fontSize: 12)),
       ],
+    );
+  }
+
+  Widget _buildShimmerContainer({
+    required double height,
+    required Color baseColor,
+    required Color highlightColor,
+    double? width,
+    BorderRadius? borderRadius,
+  }) {
+    return Shimmer.fromColors(
+      baseColor: baseColor,
+      highlightColor: highlightColor,
+      child: Container(
+        width: width ?? double.infinity,
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: borderRadius ?? BorderRadius.circular(20),
+        ),
+      ),
     );
   }
 }
