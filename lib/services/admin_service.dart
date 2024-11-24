@@ -420,4 +420,20 @@ class AdminService {
       return {};
     }
   }
+
+  Stream<QuerySnapshot> getRecentOrders({int limit = 10}) {
+    return FirebaseFirestore.instance
+        .collection('orders')
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .snapshots();
+  }
+
+  Stream<QuerySnapshot> getRecentUsers({int limit = 5}) {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .snapshots();
+  }
 }
