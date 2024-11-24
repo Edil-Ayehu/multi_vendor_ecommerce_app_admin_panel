@@ -116,10 +116,13 @@ class AdminDrawer extends StatelessWidget {
           const CircleAvatar(
             radius: 30,
             backgroundColor: Colors.white,
-            child: Image(
-              image: AssetImage('assets/edil.JPG'),
-              width: 30,
-              height: 30,
+            child: ClipOval(
+              child: Image(
+                image: AssetImage('assets/edil.JPG'),
+                width: 60,
+                height: 60,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
           const SizedBox(height: 10),

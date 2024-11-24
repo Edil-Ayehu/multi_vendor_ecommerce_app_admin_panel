@@ -75,42 +75,55 @@ class AdminService {
     try {
       print('Fetching platform analytics...'); // Debug print
 
-      final usersCount = await _firestore.collection('users').count().get();
-      print('Users count: ${usersCount.count}'); // Debug print
+      // Get users count by role
+      final customersCount = await _firestore
+          .collection('users')
+          .where('role', isEqualTo: 'customer')
+          .count()
+          .get();
+      
+      final vendorsCount = await _firestore
+          .collection('users')
+          .where('role', isEqualTo: 'vendor')
+          .count()
+          .get();
 
-      final productsCount =
-          await _firestore.collection('products').count().get();
-      print('Products count: ${productsCount.count}'); // Debug print
-
+      final productsCount = await _firestore.collection('products').count().get();
       final ordersCount = await _firestore.collection('orders').count().get();
-      print('Orders count: ${ordersCount.count}'); // Debug print
 
-      // Get all orders and calculate total revenue
-      final QuerySnapshot ordersSnapshot =
-          await _firestore.collection('orders').get();
+      // Get active ads count
+      final activeAdsCount = await _firestore
+          .collection('advertisements')
+          .where('isActive', isEqualTo: true)
+          .count()
+          .get();
+
+      // Calculate total revenue
+      final QuerySnapshot ordersSnapshot = await _firestore.collection('orders').get();
       double totalRevenue = 0;
 
       for (var doc in ordersSnapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
-        // Make sure to use the correct field name that contains the order total
         final amount = data['totalAmount'] ?? data['total'] ?? 0;
         totalRevenue += (amount is num) ? amount.toDouble() : 0.0;
       }
 
-      print('Total revenue: $totalRevenue'); // Debug print
-
       return {
-        'totalUsers': usersCount.count,
+        'totalCustomers': customersCount.count,
+        'totalVendors': vendorsCount.count,
         'totalProducts': productsCount.count,
         'totalOrders': ordersCount.count,
+        'activeAds': activeAdsCount.count,
         'totalRevenue': totalRevenue,
       };
     } catch (e) {
-      print('Error fetching analytics: $e'); // Debug print
+      print('Error fetching analytics: $e');
       return {
-        'totalUsers': 0,
+        'totalCustomers': 0,
+        'totalVendors': 0,
         'totalProducts': 0,
         'totalOrders': 0,
+        'activeAds': 0,
         'totalRevenue': 0.0,
       };
     }

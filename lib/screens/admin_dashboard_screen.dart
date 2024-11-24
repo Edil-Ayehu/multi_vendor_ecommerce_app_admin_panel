@@ -6,7 +6,6 @@ import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_products_s
 import 'package:multi_vendor_ecommerce_app_admin_panel/services/admin_service.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/widgets/admin_drawer.dart';
 import 'dart:ui' show Color;
 import 'package:timeago/timeago.dart' as timeago;
@@ -20,6 +19,7 @@ class AdminDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(context),
+      backgroundColor: Colors.grey[100],
       drawer: const AdminDrawer(),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _adminService.getPlatformAnalytics(),
@@ -93,43 +93,51 @@ class AdminDashboardScreen extends StatelessWidget {
           children: [
             _buildStatCard(
               context,
-              'Total Users',
-              data['totalUsers'].toString(),
+              'Customers',
+              data['totalCustomers'].toString(),
               LineIcons.users,
-              [
-                const Color(0xFF4158D0),
-                const Color(0xFFC850C0)
-              ], // Purple-Pink gradient
+              [const Color(0xFF4158D0), const Color(0xFFC850C0)], // Purple-Pink
+              const Color(0xffC6E7FF),
             ),
             _buildStatCard(
               context,
-              'Total Products',
+              'Vendors',
+              data['totalVendors'].toString(),
+              LineIcons.store,
+              [const Color(0xFFFA709A), const Color(0xFFFF9472)], // Pink-Orange
+              const Color(0xffD4F6FF),
+            ),
+            _buildStatCard(
+              context,
+              'Products',
               data['totalProducts'].toString(),
               LineIcons.shoppingBag,
-              [
-                const Color(0xFF43E97B),
-                const Color(0xFF38F9D7)
-              ], // Green-Cyan gradient
+              [const Color(0xFF43E97B), const Color(0xFF38F9D7)], // Green-Cyan
+              const Color(0xffFBFBFB),
             ),
             _buildStatCard(
               context,
-              'Total Orders',
+              'Orders',
               data['totalOrders'].toString(),
               LineIcons.shoppingCart,
-              [
-                const Color(0xFFFA709A),
-                const Color(0xFFFF9472)
-              ], // Pink-Orange gradient
+              [const Color(0xFF21D4FD), const Color(0xFFB721FF)], // Blue-Purple
+              const Color(0xffFFDDAE),
+            ),
+            _buildStatCard(
+              context,
+              'Active Ads',
+              data['activeAds'].toString(),
+              LineIcons.ad,
+              [const Color(0xFFFF6B6B), const Color(0xFFFFE66D)], // Red-Yellow
+              const Color.fromARGB(255, 190, 159, 236),
             ),
             _buildStatCard(
               context,
               'Revenue',
               '\$${data['totalRevenue'].toString()}',
               LineIcons.moneyBill,
-              [
-                const Color(0xFF21D4FD),
-                const Color(0xFFB721FF)
-              ], // Blue-Purple gradient
+              [const Color(0xFF00C9FF), const Color(0xFF92FE9D)], // Blue-Green
+              const Color(0xffFAFFAF),
             ),
           ],
         );
@@ -168,16 +176,13 @@ class AdminDashboardScreen extends StatelessWidget {
     String value,
     IconData icon,
     List<Color> gradientColors,
+    Color color,
   ) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: gradientColors,
-        ),
+        color: color,
         boxShadow: [
           BoxShadow(
             color: gradientColors[0].withOpacity(0.2),
@@ -193,10 +198,10 @@ class AdminDashboardScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.grey[200],
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: Colors.white, size: 24),
+            child: Icon(icon, color: Colors.black, size: 24),
           ),
           const SizedBox(height: 16),
           Text(
@@ -204,13 +209,13 @@ class AdminDashboardScreen extends StatelessWidget {
             style: GoogleFonts.poppins(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Colors.black,
             ),
           ),
           Text(
             title,
             style: GoogleFonts.poppins(
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.black,
               fontSize: 14,
             ),
           ),
@@ -234,7 +239,7 @@ class AdminDashboardScreen extends StatelessWidget {
                 Text(
                   'Recent Orders',
                   style: GoogleFonts.poppins(
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -302,6 +307,7 @@ class AdminDashboardScreen extends StatelessWidget {
                         'Ordered ${timeago.format(orderTime)}',
                         style: GoogleFonts.poppins(
                           color: Theme.of(context).textTheme.bodySmall?.color,
+                          fontSize: 12,
                         ),
                       ),
                       trailing: Text(
@@ -395,7 +401,7 @@ class AdminDashboardScreen extends StatelessWidget {
                 Text(
                   'Recent Users',
                   style: GoogleFonts.poppins(
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
