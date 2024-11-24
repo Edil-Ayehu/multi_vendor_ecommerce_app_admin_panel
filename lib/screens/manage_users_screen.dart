@@ -12,9 +12,28 @@ class ManageUsersScreen extends StatefulWidget {
   State<ManageUsersScreen> createState() => _ManageUsersScreenState();
 }
 
-class _ManageUsersScreenState extends State<ManageUsersScreen> {
+class _ManageUsersScreenState extends State<ManageUsersScreen>
+    with SingleTickerProviderStateMixin {
   final AdminService _adminService = AdminService();
   String? selectedUserId;
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,21 +58,31 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
             ),
           ),
           bottom: TabBar(
+            controller: _tabController,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             indicatorSize: TabBarIndicatorSize.tab,
             indicatorWeight: 2,
-            indicatorColor: Theme.of(context).colorScheme.primary,
+            indicatorColor: Colors.transparent,
             dividerColor: Colors.transparent,
             labelColor: Theme.of(context).colorScheme.primary,
             unselectedLabelColor:
                 Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.7),
             tabs: [
               Tab(
-                height: 48,
+                height: 52,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
+                    color: _tabController.index == 0
+                        ? Colors.blue.withOpacity(0.1)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _tabController.index == 0
+                          ? Colors.blue
+                          : Colors.transparent,
+                      width: 1,
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -61,6 +90,13 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                       Icon(
                         Icons.person_rounded,
                         size: 20,
+                        color: _tabController.index == 0
+                            ? Colors.blue
+                            : Theme.of(context)
+                                .textTheme
+                                .bodyLarge
+                                ?.color
+                                ?.withOpacity(0.7),
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -68,6 +104,13 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
+                          color: _tabController.index == 0
+                              ? Colors.blue
+                              : Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.color
+                                  ?.withOpacity(0.7),
                         ),
                       ),
                     ],
@@ -75,11 +118,20 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                 ),
               ),
               Tab(
-                height: 48,
+                height: 52,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
+                    color: _tabController.index == 1
+                        ? Colors.purple.withOpacity(0.1)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _tabController.index == 1
+                          ? Colors.purple
+                          : Colors.transparent,
+                      width: 1,
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -87,6 +139,13 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                       Icon(
                         Icons.store_rounded,
                         size: 20,
+                        color: _tabController.index == 1
+                            ? Colors.purple
+                            : Theme.of(context)
+                                .textTheme
+                                .bodyLarge
+                                ?.color
+                                ?.withOpacity(0.7),
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -94,6 +153,13 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
+                          color: _tabController.index == 1
+                              ? Colors.purple
+                              : Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.color
+                                  ?.withOpacity(0.7),
                         ),
                       ),
                     ],
@@ -104,6 +170,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
           ),
         ),
         body: TabBarView(
+          controller: _tabController,
           children: [
             _buildUsersView(_adminService.getCustomers(), isSmallScreen),
             _buildUsersView(_adminService.getVendors(), isSmallScreen),
@@ -127,7 +194,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
         }
 
         final users = snapshot.data!.docs;
-        final isVendorTab = DefaultTabController.of(context).index == 1;
+        final isVendorTab = _tabController.index == 1;
 
         // Sort users by createdAt timestamp (most recent first)
         users.sort((a, b) {
@@ -149,7 +216,8 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
 
         // For small screens, show either the list or the details
         if (isSmallScreen && selectedUserId != null && !isVendorTab) {
-          final selectedUser = users.firstWhere((doc) => doc.id == selectedUserId);
+          final selectedUser =
+              users.firstWhere((doc) => doc.id == selectedUserId);
           return SingleChildScrollView(
             child: Column(
               children: [
@@ -173,12 +241,15 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
         return Row(
           children: [
             Expanded(
-              flex: selectedUserId != null && !isSmallScreen && !isVendorTab ? 3 : 5,
+              flex: selectedUserId != null && !isSmallScreen && !isVendorTab
+                  ? 3
+                  : 5,
               child: GridView.builder(
                 padding: const EdgeInsets.all(16),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: _calculateCrossAxisCount(MediaQuery.of(context).size.width),
-                  childAspectRatio: isVendorTab ? 1.2 : 1,
+                  crossAxisCount: _calculateCrossAxisCount(
+                      MediaQuery.of(context).size.width),
+                  childAspectRatio: isVendorTab ? 1.1 : 1,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
                 ),
@@ -201,7 +272,8 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                       ListTile(
                         trailing: IconButton(
                           icon: const Icon(Icons.close),
-                          onPressed: () => setState(() => selectedUserId = null),
+                          onPressed: () =>
+                              setState(() => selectedUserId = null),
                         ),
                         title: const Text('Customer Details'),
                       ),
@@ -225,14 +297,14 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
 
   int _calculateCrossAxisCount(double width) {
     final bool isDetailsOpen = selectedUserId != null;
-    
+
     // Reduce the width thresholds when details panel is open
     if (isDetailsOpen) {
       if (width > 1500) return 3;
       if (width > 1200) return 2;
       return 1;
     }
-    
+
     // Original thresholds when details panel is closed
     if (width > 1200) return 4;
     if (width > 900) return 3;
@@ -240,7 +312,8 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
     return 1;
   }
 
-  Widget _buildCustomerCard(BuildContext context, Map<String, dynamic> userData, String userId) {
+  Widget _buildCustomerCard(
+      BuildContext context, Map<String, dynamic> userData, String userId) {
     final bool isBlocked = userData['isBlocked'] ?? false;
 
     return Card(
@@ -310,7 +383,11 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                 userData['email'] ?? 'N/A',
                 style: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                  color: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.color
+                      ?.withOpacity(0.7),
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 1,
@@ -318,7 +395,8 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
               ),
               const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.blue.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -339,7 +417,8 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
     );
   }
 
-  Widget _buildVendorCard(BuildContext context, Map<String, dynamic> userData, String userId) {
+  Widget _buildVendorCard(
+      BuildContext context, Map<String, dynamic> userData, String userId) {
     final bool isBlocked = userData['isBlocked'] ?? false;
 
     return Card(
@@ -404,7 +483,11 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
               userData['email'] ?? 'N/A',
               style: GoogleFonts.poppins(
                 fontSize: 14,
-                color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                color: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.color
+                    ?.withOpacity(0.7),
               ),
               textAlign: TextAlign.center,
               maxLines: 1,
@@ -430,7 +513,8 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
             Switch.adaptive(
               value: !isBlocked,
               activeColor: Theme.of(context).colorScheme.primary,
-              onChanged: (value) => _adminService.toggleUserStatus(userId, !value),
+              onChanged: (value) =>
+                  _adminService.toggleUserStatus(userId, !value),
             ),
           ],
         ),
