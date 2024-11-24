@@ -99,13 +99,7 @@ class AdminDrawer extends StatelessWidget {
               context,
               icon: Icons.logout_rounded,
               title: 'Sign Out',
-              onTap: () async {
-                await FirebaseAuth.instance.signOut();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SignInScreen()),
-                );
-              },
+              onTap: () => _showSignOutDialog(context),
             ),
           ],
         ),
@@ -204,6 +198,54 @@ class AdminDrawer extends StatelessWidget {
       ),
       minLeadingWidth: 20,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    );
+  }
+
+  Future<void> _showSignOutDialog(BuildContext context) async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Sign Out',
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to sign out?',
+            style: GoogleFonts.poppins(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.poppins(
+                  color: Colors.grey[600],
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await FirebaseAuth.instance.signOut();
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SignInScreen()),
+                );
+              },
+              child: Text(
+                'Sign Out',
+                style: GoogleFonts.poppins(
+                  color: Theme.of(context).colorScheme.error,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
