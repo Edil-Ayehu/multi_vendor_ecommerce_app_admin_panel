@@ -886,11 +886,18 @@ class AnalyticsScreen extends StatelessWidget {
               ),
               padding: EdgeInsets.all(isSmallScreen ? 12 : 20),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF2C3E50), // Dark blue
+                    const Color(0xFF3498DB), // Light blue
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withOpacity(0.1),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -900,7 +907,6 @@ class AnalyticsScreen extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header Section
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -914,6 +920,7 @@ class AnalyticsScreen extends StatelessWidget {
                               style: GoogleFonts.poppins(
                                 fontSize: isSmallScreen ? 14 : 18,
                                 fontWeight: FontWeight.w600,
+                                color: Colors.white,
                               ),
                             ),
                             if (!isVerySmallHeight) ...[
@@ -922,7 +929,7 @@ class AnalyticsScreen extends StatelessWidget {
                                 'Total Ads: $total',
                                 style: GoogleFonts.poppins(
                                   fontSize: isSmallScreen ? 10 : 13,
-                                  color: Colors.grey[600],
+                                  color: Colors.white.withOpacity(0.7),
                                 ),
                               ),
                             ],
@@ -931,24 +938,27 @@ class AnalyticsScreen extends StatelessWidget {
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 3,
+                          horizontal: 12,
+                          vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.refresh,
-                                size: 12, color: Colors.grey[600]),
-                            const SizedBox(width: 3),
+                            Icon(
+                              Icons.refresh,
+                              size: 16,
+                              color: Colors.white.withOpacity(0.7),
+                            ),
+                            const SizedBox(width: 4),
                             Text(
                               'Real-time',
                               style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                color: Colors.grey[600],
+                                fontSize: 12,
+                                color: Colors.white.withOpacity(0.7),
                               ),
                             ),
                           ],
@@ -956,9 +966,7 @@ class AnalyticsScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  SizedBox(height: isSmallScreen ? 6 : 16),
-
-                  // Chart Section
+                  SizedBox(height: isSmallScreen ? 20 : 40),
                   Expanded(
                     child: isSmallScreen
                         ? Column(
@@ -969,7 +977,8 @@ class AnalyticsScreen extends StatelessWidget {
                                 child: _buildAdsPieChart(
                                     data, total, isSmallScreen),
                               ),
-                              if (!isVerySmallHeight) const SizedBox(height: 4),
+                              if (!isVerySmallHeight)
+                                const SizedBox(height: 24),
                               Expanded(
                                 flex: 2,
                                 child:
@@ -984,7 +993,7 @@ class AnalyticsScreen extends StatelessWidget {
                                 child: _buildAdsPieChart(
                                     data, total, isSmallScreen),
                               ),
-                              const SizedBox(width: 16),
+                              const SizedBox(width: 40),
                               Expanded(
                                 flex: 2,
                                 child:
@@ -1079,13 +1088,14 @@ class AnalyticsScreen extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontSize: isSmallScreen ? 12 : 14,
                     fontWeight: FontWeight.w600,
+                    color: Colors.white,
                   ),
                 ),
                 Text(
                   '$count ads (${percentage.toStringAsFixed(1)}%)',
                   style: GoogleFonts.poppins(
                     fontSize: isSmallScreen ? 10 : 12,
-                    color: Colors.grey[600],
+                    color: Colors.white.withOpacity(0.7),
                   ),
                 ),
               ],
