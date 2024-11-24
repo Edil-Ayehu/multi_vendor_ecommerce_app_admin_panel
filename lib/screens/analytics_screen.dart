@@ -5,7 +5,6 @@ import 'package:multi_vendor_ecommerce_app_admin_panel/services/admin_service.da
 import 'dart:math' as math;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'dart:math' show max;
 
 class AnalyticsScreen extends StatelessWidget {
   final AdminService _adminService = AdminService();
@@ -82,16 +81,16 @@ class AnalyticsScreen extends StatelessWidget {
                   child: _buildOrderStatusChart(),
                 ),
                 const SizedBox(height: 30),
-                _buildSectionTitle('Advertisement Analytics'),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  child: _buildAdvertisementChart(),
-                ),
-                const SizedBox(height: 30),
                 _buildSectionTitle('Product Category Analytics'),
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   child: _buildProductCategoryChart(),
+                ),
+                const SizedBox(height: 30),
+                _buildSectionTitle('Advertisement Analytics'),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  child: _buildAdvertisementChart(),
                 ),
                 const SizedBox(height: 30),
               ],
@@ -1109,7 +1108,7 @@ class AnalyticsScreen extends StatelessWidget {
           height: 400,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: const Color(0xff203857),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -1127,6 +1126,7 @@ class AnalyticsScreen extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
               ),
               const SizedBox(height: 24),
@@ -1146,7 +1146,8 @@ class AnalyticsScreen extends StatelessWidget {
                               padding: const EdgeInsets.only(right: 8),
                               child: Text(
                                 value.toInt().toString(),
-                                style: GoogleFonts.poppins(fontSize: 12),
+                                style: GoogleFonts.poppins(
+                                    fontSize: 12, color: Colors.white),
                                 textAlign: TextAlign.right,
                               ),
                             );
@@ -1158,8 +1159,9 @@ class AnalyticsScreen extends StatelessWidget {
                           showTitles: true,
                           reservedSize: 100,
                           getTitlesWidget: (value, meta) {
-                            if (value.toInt() >= sortedData.length)
+                            if (value.toInt() >= sortedData.length) {
                               return const Text('');
+                            }
                             return Padding(
                               padding: const EdgeInsets.only(top: 8),
                               child: Transform.rotate(
@@ -1171,6 +1173,7 @@ class AnalyticsScreen extends StatelessWidget {
                                     style: GoogleFonts.poppins(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
+                                      color: Colors.white,
                                     ),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
@@ -1182,10 +1185,10 @@ class AnalyticsScreen extends StatelessWidget {
                           },
                         ),
                       ),
-                      rightTitles: AxisTitles(
+                      rightTitles: const AxisTitles(
                         sideTitles: SideTitles(showTitles: false),
                       ),
-                      topTitles: AxisTitles(
+                      topTitles: const AxisTitles(
                         sideTitles: SideTitles(showTitles: false),
                       ),
                     ),
@@ -1195,7 +1198,7 @@ class AnalyticsScreen extends StatelessWidget {
                       horizontalInterval: 1,
                       getDrawingHorizontalLine: (value) {
                         return FlLine(
-                          color: Colors.grey.withOpacity(0.1),
+                          color: Colors.white.withOpacity(0.1),
                           strokeWidth: 1,
                         );
                       },
