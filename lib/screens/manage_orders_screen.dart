@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/services/admin_service.dart';
 import 'package:collection/collection.dart';
+import 'dart:math' show min;
 
 class ManageOrdersScreen extends StatefulWidget {
   const ManageOrdersScreen({super.key});
@@ -19,12 +20,66 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
   String? selectedOrderId;
   late TabController _tabController;
 
+  // Add pagination variables
+  int currentPage = 1;
+  final int ordersPerPage = 18;
+
+  // Create a map of keys for each tab
+  final Map<String?, GlobalKey> _pageKeys = {
+    null: GlobalKey(), // All orders
+    'pending': GlobalKey(),
+    'processing': GlobalKey(),
+    'shipped': GlobalKey(),
+    'delivered': GlobalKey(),
+    'cancelled': GlobalKey(),
+  };
+
+  // Add a map to store current page for each tab
+  final Map<String?, int> _currentPages = {
+    null: 1, // All orders
+    'pending': 1,
+    'processing': 1,
+    'shipped': 1,
+    'delivered': 1,
+    'cancelled': 1,
+  };
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 6, vsync: this);
     _tabController.addListener(() {
-      setState(() {});
+      setState(() {
+        // Don't reset the page when changing tabs
+        currentPage = _currentPages[_getStatusForIndex(_tabController.index)] ?? 1;
+      });
+    });
+  }
+
+  // Helper method to get status for tab index
+  String? _getStatusForIndex(int index) {
+    switch (index) {
+      case 0:
+        return null; // All orders
+      case 1:
+        return 'pending';
+      case 2:
+        return 'processing';
+      case 3:
+        return 'shipped';
+      case 4:
+        return 'delivered';
+      case 5:
+        return 'cancelled';
+      default:
+        return null;
+    }
+  }
+
+  void _updatePage(int newPage, String? status) {
+    setState(() {
+      _currentPages[status] = newPage;
+      currentPage = newPage;
     });
   }
 
@@ -76,14 +131,24 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
                   dividerColor: Colors.transparent,
                   indicator: const BoxDecoration(),
                   labelColor: Theme.of(context).colorScheme.primary,
-                  unselectedLabelColor: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                  unselectedLabelColor: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.color
+                      ?.withOpacity(0.7),
                   tabs: [
-                    _buildTab('All', LineIcons.shoppingBag, Colors.blue, 0, constraints.maxWidth / 6),
-                    _buildTab('Pending', LineIcons.clock, Colors.orange, 1, constraints.maxWidth / 6),
-                    _buildTab('Processing', LineIcons.spinner, Colors.blue, 2, constraints.maxWidth / 6),
-                    _buildTab('Shipped', LineIcons.truck, Colors.purple, 3, constraints.maxWidth / 6),
-                    _buildTab('Delivered', LineIcons.checkCircle, Colors.green, 4, constraints.maxWidth / 6),
-                    _buildTab('Cancelled', LineIcons.times, Colors.red, 5, constraints.maxWidth / 6),
+                    _buildTab('All', LineIcons.shoppingBag, Colors.blue, 0,
+                        constraints.maxWidth / 6),
+                    _buildTab('Pending', LineIcons.clock, Colors.orange, 1,
+                        constraints.maxWidth / 6),
+                    _buildTab('Processing', LineIcons.spinner, Colors.blue, 2,
+                        constraints.maxWidth / 6),
+                    _buildTab('Shipped', LineIcons.truck, Colors.purple, 3,
+                        constraints.maxWidth / 6),
+                    _buildTab('Delivered', LineIcons.checkCircle, Colors.green,
+                        4, constraints.maxWidth / 6),
+                    _buildTab('Cancelled', LineIcons.times, Colors.red, 5,
+                        constraints.maxWidth / 6),
                   ],
                 );
               },
@@ -102,6 +167,7 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
             return const Center(child: CircularProgressIndicator());
           }
 
+          // Store orders in a variable to maintain consistency
           final allOrders = snapshot.data!.docs;
 
           return TabBarView(
@@ -120,9 +186,10 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
     );
   }
 
-  Widget _buildTab(String title, IconData icon, Color color, int index, double width) {
+  Widget _buildTab(
+      String title, IconData icon, Color color, int index, double width) {
     final isSelected = _tabController.index == index;
-    
+
     return Tab(
       height: 56,
       child: SizedBox(
@@ -145,9 +212,13 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
               Icon(
                 icon,
                 size: 18,
-                color: isSelected 
-                    ? color 
-                    : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                color: isSelected
+                    ? color
+                    : Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.color
+                        ?.withOpacity(0.7),
               ),
               const SizedBox(width: 4),
               Flexible(
@@ -156,9 +227,13 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
                   style: GoogleFonts.poppins(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: isSelected 
-                        ? color 
-                        : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                    color: isSelected
+                        ? color
+                        : Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.color
+                            ?.withOpacity(0.7),
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -172,7 +247,7 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
 
   Widget _buildOrdersView(
       List<DocumentSnapshot> orders, String? status, bool isSmallScreen) {
-    // Filter orders by status if specified
+    // Filter orders based on status
     final filteredOrders = status != null
         ? orders.where((doc) {
             final data = doc.data() as Map<String, dynamic>;
@@ -186,47 +261,88 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              LineIcons.shoppingCart,
-              size: 64,
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-            ),
+            Icon(LineIcons.shoppingCart,
+                size: 64,
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.5)),
             const SizedBox(height: 16),
             Text(
               'No ${status ?? ''} orders found',
               style: GoogleFonts.poppins(
-                fontSize: 18,
-                color: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.color
-                    ?.withOpacity(0.7),
-              ),
+                  fontSize: 18,
+                  color: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.color
+                      ?.withOpacity(0.7)),
             ),
           ],
         ),
       );
     }
 
-    // For small screens with selected order
-    if (isSmallScreen && selectedOrderId != null) {
-      return _buildOrderDetailsView(filteredOrders);
-    }
+    // Calculate pagination values
+    final totalOrders = filteredOrders.length;
+    final totalPages = (totalOrders / ordersPerPage).ceil();
+    final currentPageForStatus = _currentPages[status] ?? 1;
+    
+    final startIndex = (currentPageForStatus - 1) * ordersPerPage;
+    final endIndex = min(startIndex + ordersPerPage, totalOrders);
+    final currentPageOrders = filteredOrders.sublist(startIndex, endIndex);
 
-    // Split view for larger screens or order list for small screens
-    return Row(
+    return Column(
+      key: _pageKeys[status],
       children: [
         Expanded(
-          flex: 3,
-          child: _buildOrdersList(filteredOrders),
-        ),
-        if (selectedOrderId != null && !isSmallScreen) ...[
-          Container(width: 1, color: Colors.grey[300]),
-          Expanded(
-            flex: 2,
-            child: _buildOrderDetailsPanel(filteredOrders),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: _buildOrdersList(currentPageOrders),
+              ),
+              if (selectedOrderId != null && !isSmallScreen) ...[
+                Container(width: 1, color: Colors.grey[300]),
+                Expanded(
+                  flex: 2,
+                  child: _buildOrderDetailsPanel(filteredOrders),
+                ),
+              ],
+            ],
           ),
-        ],
+        ),
+        if (totalPages > 1)
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                ),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chevron_left),
+                  onPressed: currentPageForStatus > 1
+                      ? () => _updatePage(currentPageForStatus - 1, status)
+                      : null,
+                ),
+                const SizedBox(width: 16),
+                Text(
+                  'Page $currentPageForStatus of $totalPages',
+                  style: GoogleFonts.poppins(),
+                ),
+                const SizedBox(width: 16),
+                IconButton(
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: currentPageForStatus < totalPages
+                      ? () => _updatePage(currentPageForStatus + 1, status)
+                      : null,
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }
@@ -539,18 +655,7 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
                       contentPadding: EdgeInsets.zero,
                       leading: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          item['image'] ?? '',
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            width: 50,
-                            height: 50,
-                            color: Colors.grey[200],
-                            child: const Icon(LineIcons.image),
-                          ),
-                        ),
+                        child: _buildProductImage(item['image']),
                       ),
                       title: Text(
                         item['name'] ?? 'Unknown Product',
@@ -718,6 +823,53 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
       child: Text(
         status.toUpperCase(),
         style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
+      ),
+    );
+  }
+
+  Widget _buildProductImage(String? imageUrl) {
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return _buildPlaceholder();
+    }
+
+    return Image.network(
+      imageUrl,
+      width: 50,
+      height: 50,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Container(
+          width: 50,
+          height: 50,
+          color: Colors.grey[200],
+          child: Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded /
+                      loadingProgress.expectedTotalBytes!
+                  : null,
+              strokeWidth: 2,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      width: 50,
+      height: 50,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(
+        LineIcons.image,
+        color: Colors.grey[400],
+        size: 24,
       ),
     );
   }
