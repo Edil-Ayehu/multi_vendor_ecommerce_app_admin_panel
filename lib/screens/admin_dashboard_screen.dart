@@ -109,71 +109,88 @@ class AdminDashboardScreen extends StatelessWidget {
             ? 4
             : constraints.maxWidth > 800
                 ? 2
-                : 1;
+                : constraints.maxWidth > 600
+                    ? 2
+                    : 2;
 
-        return GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: crossAxisCount,
-          crossAxisSpacing: 24,
-          mainAxisSpacing: 24,
-          childAspectRatio: constraints.maxWidth > 1200 ? 1.5 : 1.3,
-          children: [
-            _buildStatCard(
-              context,
-              'Customers',
-              data['totalCustomers'].toString(),
-              LineIcons.users,
-              isDarkMode
-                  ? const Color.fromARGB(255, 11, 11, 53)
-                  : const Color(0xffC6E7FF),
-            ),
-            _buildStatCard(
-              context,
-              'Vendors',
-              data['totalVendors'].toString(),
-              LineIcons.store,
-              isDarkMode
-                  ? const Color.fromARGB(255, 11, 11, 53)
-                  : const Color(0xffD4F6FF),
-            ),
-            _buildStatCard(
-              context,
-              'Products',
-              data['totalProducts'].toString(),
-              LineIcons.shoppingBag,
-              isDarkMode
-                  ? const Color.fromARGB(255, 11, 11, 53)
-                  : const Color(0xffFBFBFB),
-            ),
-            _buildStatCard(
-              context,
-              'Orders',
-              data['totalOrders'].toString(),
-              LineIcons.shoppingCart,
-              isDarkMode
-                  ? const Color.fromARGB(255, 11, 11, 53)
-                  : const Color(0xffFFDDAE),
-            ),
-            _buildStatCard(
-              context,
-              'Active Ads',
-              data['activeAds'].toString(),
-              LineIcons.ad,
-              isDarkMode
-                  ? const Color.fromARGB(255, 11, 11, 53)
-                  : const Color.fromARGB(255, 190, 159, 236),
-            ),
-            _buildStatCard(
-              context,
-              'Revenue',
-              '\$${data['totalRevenue'].toString()}',
-              LineIcons.moneyBill,
-              isDarkMode
-                  ? const Color.fromARGB(255, 11, 11, 53)
-                  : const Color(0xffFAFFAF),
-            ),
-          ],
+        final childAspectRatio = constraints.maxWidth > 1200
+            ? 1.5
+            : constraints.maxWidth > 800
+                ? 1.3
+                : constraints.maxWidth > 600
+                    ? 1.5
+                    : 1.5;
+
+        final spacing = constraints.maxWidth > 600 ? 24.0 : 12.0;
+
+        return Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: constraints.maxWidth > 600 ? 0 : 8.0,
+          ),
+          child: GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: spacing,
+            mainAxisSpacing: spacing,
+            childAspectRatio: childAspectRatio,
+            children: [
+              _buildStatCard(
+                context,
+                'Customers',
+                data['totalCustomers'].toString(),
+                LineIcons.users,
+                isDarkMode
+                    ? const Color.fromARGB(255, 11, 11, 53)
+                    : const Color(0xffC6E7FF),
+              ),
+              _buildStatCard(
+                context,
+                'Vendors',
+                data['totalVendors'].toString(),
+                LineIcons.store,
+                isDarkMode
+                    ? const Color.fromARGB(255, 11, 11, 53)
+                    : const Color(0xffD4F6FF),
+              ),
+              _buildStatCard(
+                context,
+                'Products',
+                data['totalProducts'].toString(),
+                LineIcons.shoppingBag,
+                isDarkMode
+                    ? const Color.fromARGB(255, 11, 11, 53)
+                    : const Color(0xffFBFBFB),
+              ),
+              _buildStatCard(
+                context,
+                'Orders',
+                data['totalOrders'].toString(),
+                LineIcons.shoppingCart,
+                isDarkMode
+                    ? const Color.fromARGB(255, 11, 11, 53)
+                    : const Color(0xffFFDDAE),
+              ),
+              _buildStatCard(
+                context,
+                'Active Ads',
+                data['activeAds'].toString(),
+                LineIcons.ad,
+                isDarkMode
+                    ? const Color.fromARGB(255, 11, 11, 53)
+                    : const Color.fromARGB(255, 190, 159, 236),
+              ),
+              _buildStatCard(
+                context,
+                'Revenue',
+                '\$${data['totalRevenue'].toString()}',
+                LineIcons.moneyBill,
+                isDarkMode
+                    ? const Color.fromARGB(255, 11, 11, 53)
+                    : const Color(0xffFAFFAF),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -197,13 +214,28 @@ class AdminDashboardScreen extends StatelessWidget {
               _buildRecentAds(context),
             ],
           );
+        } else if (constraints.maxWidth > 800) {
+          return Column(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: _buildRecentOrders(context)),
+                  const SizedBox(width: 16),
+                  Expanded(child: _buildRecentUsers(context)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildRecentAds(context),
+            ],
+          );
         } else {
           return Column(
             children: [
               _buildRecentOrders(context),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               _buildRecentUsers(context),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               _buildRecentAds(context),
             ],
           );
@@ -220,8 +252,17 @@ class AdminDashboardScreen extends StatelessWidget {
     Color color,
   ) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    final cardPadding = screenWidth > 600 ? 24.0 : 16.0;
+
+    final iconSize = screenWidth > 600 ? 24.0 : 20.0;
+
+    final valueSize = screenWidth > 600 ? 28.0 : 20.0;
+    final titleSize = screenWidth > 600 ? 14.0 : 12.0;
+
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(cardPadding),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         color: color,
@@ -231,18 +272,18 @@ class AdminDashboardScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(screenWidth > 600 ? 12 : 8),
             decoration: BoxDecoration(
               color: Colors.grey[200],
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: Colors.black, size: 24),
+            child: Icon(icon, color: Colors.black, size: iconSize),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Text(
             value,
             style: GoogleFonts.poppins(
-              fontSize: 28,
+              fontSize: valueSize,
               fontWeight: FontWeight.bold,
               color: isDarkMode ? Colors.white : Colors.black,
             ),
@@ -251,7 +292,7 @@ class AdminDashboardScreen extends StatelessWidget {
             title,
             style: GoogleFonts.poppins(
               color: isDarkMode ? Colors.white : Colors.black,
-              fontSize: 14,
+              fontSize: titleSize,
             ),
           ),
         ],
@@ -612,13 +653,16 @@ class AdminDashboardScreen extends StatelessWidget {
 
   Widget _buildRecentAds(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth <= 600;
+
     return Card(
       elevation: 2,
       color:
           isDarkMode ? const Color.fromARGB(255, 11, 11, 53) : Colors.grey[100],
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(isSmallScreen ? 8 : 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -628,13 +672,21 @@ class AdminDashboardScreen extends StatelessWidget {
                 Text(
                   'Recent Advertisements',
                   style: GoogleFonts.poppins(
-                    fontSize: 20,
+                    fontSize: screenWidth > 600 ? 20 : 16,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 TextButton.icon(
-                  icon: const Icon(LineIcons.ad),
-                  label: const Text('Manage Ads'),
+                  icon: Icon(
+                    LineIcons.ad,
+                    size: screenWidth > 600 ? 24 : 20,
+                  ),
+                  label: Text(
+                    screenWidth > 600 ? 'Manage Ads' : 'View All',
+                    style: TextStyle(
+                      fontSize: screenWidth > 600 ? 14 : 12,
+                    ),
+                  ),
                   onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -643,7 +695,7 @@ class AdminDashboardScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: screenWidth > 600 ? 16 : 12),
             StreamBuilder<QuerySnapshot>(
               stream: _adminService.getRecentAds(limit: 5),
               builder: (context, snapshot) {
@@ -662,9 +714,24 @@ class AdminDashboardScreen extends StatelessWidget {
 
                 return GridView.builder(
                   shrinkWrap: true,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    childAspectRatio: 1.4,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: screenWidth > 1200
+                        ? 4
+                        : screenWidth > 800
+                            ? 3
+                            : screenWidth > 600
+                                ? 2
+                                : 2,
+                    childAspectRatio: screenWidth > 1200
+                        ? 1.4
+                        : screenWidth > 800
+                            ? 1.3
+                            : screenWidth > 600
+                                ? 1.2
+                                : 1,
+                    crossAxisSpacing: isSmallScreen ? 8 : 16,
+                    mainAxisSpacing: isSmallScreen ? 8 : 16,
                   ),
                   itemCount: ads.length,
                   itemBuilder: (context, index) {
@@ -672,100 +739,104 @@ class AdminDashboardScreen extends StatelessWidget {
                     final expiryDate = (ad['expiryDate'] as Timestamp).toDate();
                     final isExpired = expiryDate.isBefore(DateTime.now());
 
-                    return SizedBox(
-                      width: 280,
-                      child: Card(
-                        elevation: 0,
-                        color: isDarkMode
-                            ? const Color.fromARGB(255, 11, 11, 53)
-                            : Colors.grey[100],
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: BorderSide(
-                            color:
-                                Theme.of(context).dividerColor.withOpacity(0.1),
-                          ),
+                    return Card(
+                      elevation: 0,
+                      color: isDarkMode
+                          ? const Color.fromARGB(255, 11, 11, 53)
+                          : Colors.grey[100],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        side: BorderSide(
+                          color:
+                              Theme.of(context).dividerColor.withOpacity(0.1),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ClipRRect(
-                              borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(8)),
-                              child: Image.network(
-                                ad['imageUrl'] ??
-                                    'https://via.placeholder.com/400x200',
-                                height: 100,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                              ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ClipRRect(
+                            borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(8)),
+                            child: Image.network(
+                              ad['imageUrl'] ??
+                                  'https://via.placeholder.com/400x200',
+                              height: isSmallScreen ? 120 : 100,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(12),
+                          ),
+                          Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.all(isSmallScreen ? 6 : 12),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
                                     ad['title'] ?? 'No Title',
                                     style: GoogleFonts.poppins(
                                       fontWeight: FontWeight.w500,
-                                      fontSize: 14,
+                                      fontSize: isSmallScreen ? 11 : 14,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        LineIcons.calendar,
-                                        size: 14,
-                                        color: isExpired
-                                            ? Colors.red
-                                            : Colors.grey[600],
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'Expires ${DateFormat('MMM d').format(expiryDate)}',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 12,
+                                  SizedBox(height: isSmallScreen ? 2 : 4),
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          LineIcons.calendar,
+                                          size: isSmallScreen ? 10 : 14,
                                           color: isExpired
                                               ? Colors.red
                                               : Colors.grey[600],
                                         ),
-                                      ),
-                                      const Spacer(),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: ad['isActive'] == true
-                                              ? Colors.green.withOpacity(0.1)
-                                              : Colors.red.withOpacity(0.1),
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                        child: Text(
-                                          ad['isActive'] == true
-                                              ? 'Active'
-                                              : 'Inactive',
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 11,
-                                            color: ad['isActive'] == true
-                                                ? Colors.green
-                                                : Colors.red,
+                                        SizedBox(width: isSmallScreen ? 2 : 4),
+                                        Expanded(
+                                          child: Text(
+                                            'Expires ${DateFormat('MMM d').format(expiryDate)}',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: isSmallScreen ? 9 : 12,
+                                              color: isExpired
+                                                  ? Colors.red
+                                                  : Colors.grey[600],
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: isSmallScreen ? 4 : 8,
+                                            vertical: isSmallScreen ? 1 : 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: ad['isActive'] == true
+                                                ? Colors.green.withOpacity(0.1)
+                                                : Colors.red.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(
+                                                isSmallScreen ? 8 : 12),
+                                          ),
+                                          child: Text(
+                                            ad['isActive'] == true
+                                                ? 'Active'
+                                                : 'Inactive',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: isSmallScreen ? 8 : 11,
+                                              color: ad['isActive'] == true
+                                                  ? Colors.green
+                                                  : Colors.red,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     );
                   },
