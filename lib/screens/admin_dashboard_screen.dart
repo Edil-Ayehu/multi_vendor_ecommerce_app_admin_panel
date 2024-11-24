@@ -98,7 +98,6 @@ class AdminDashboardScreen extends StatelessWidget {
               'Customers',
               data['totalCustomers'].toString(),
               LineIcons.users,
-              [const Color(0xFF4158D0), const Color(0xFFC850C0)], // Purple-Pink
               const Color(0xffC6E7FF),
             ),
             _buildStatCard(
@@ -106,7 +105,6 @@ class AdminDashboardScreen extends StatelessWidget {
               'Vendors',
               data['totalVendors'].toString(),
               LineIcons.store,
-              [const Color(0xFFFA709A), const Color(0xFFFF9472)], // Pink-Orange
               const Color(0xffD4F6FF),
             ),
             _buildStatCard(
@@ -114,7 +112,6 @@ class AdminDashboardScreen extends StatelessWidget {
               'Products',
               data['totalProducts'].toString(),
               LineIcons.shoppingBag,
-              [const Color(0xFF43E97B), const Color(0xFF38F9D7)], // Green-Cyan
               const Color(0xffFBFBFB),
             ),
             _buildStatCard(
@@ -122,7 +119,6 @@ class AdminDashboardScreen extends StatelessWidget {
               'Orders',
               data['totalOrders'].toString(),
               LineIcons.shoppingCart,
-              [const Color(0xFF21D4FD), const Color(0xFFB721FF)], // Blue-Purple
               const Color(0xffFFDDAE),
             ),
             _buildStatCard(
@@ -130,7 +126,6 @@ class AdminDashboardScreen extends StatelessWidget {
               'Active Ads',
               data['activeAds'].toString(),
               LineIcons.ad,
-              [const Color(0xFFFF6B6B), const Color(0xFFFFE66D)], // Red-Yellow
               const Color.fromARGB(255, 190, 159, 236),
             ),
             _buildStatCard(
@@ -138,7 +133,6 @@ class AdminDashboardScreen extends StatelessWidget {
               'Revenue',
               '\$${data['totalRevenue'].toString()}',
               LineIcons.moneyBill,
-              [const Color(0xFF00C9FF), const Color(0xFF92FE9D)], // Blue-Green
               const Color(0xffFAFFAF),
             ),
           ],
@@ -185,7 +179,6 @@ class AdminDashboardScreen extends StatelessWidget {
     String title,
     String value,
     IconData icon,
-    List<Color> gradientColors,
     Color color,
   ) {
     return Container(
@@ -195,7 +188,7 @@ class AdminDashboardScreen extends StatelessWidget {
         color: color,
         boxShadow: [
           BoxShadow(
-            color: gradientColors[0].withOpacity(0.2),
+            color: Colors.grey[200]!,
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
