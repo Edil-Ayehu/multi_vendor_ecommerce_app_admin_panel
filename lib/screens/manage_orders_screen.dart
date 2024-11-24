@@ -223,8 +223,14 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
   }
 
   Widget _buildOrdersList(List<DocumentSnapshot> orders) {
-    return ListView.builder(
+    return GridView.builder(
       padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 400,
+        mainAxisExtent: 160, // Fixed height for each card
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+      ),
       itemCount: orders.length,
       itemBuilder: (context, index) {
         final order = orders[index];
@@ -237,70 +243,100 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
 
         return Card(
           elevation: 0,
-          margin: const EdgeInsets.only(bottom: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(
               color: Theme.of(context).dividerColor.withOpacity(0.1),
             ),
           ),
-          child: ListTile(
+          child: InkWell(
             onTap: () => setState(() => selectedOrderId = order.id),
-            selected: selectedOrderId == order.id,
-            selectedTileColor:
-                Theme.of(context).colorScheme.primary.withOpacity(0.1),
-            contentPadding: const EdgeInsets.all(16),
-            leading: Container(
-              padding: const EdgeInsets.all(8),
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+                color: selectedOrderId == order.id
+                    ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                    : null,
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                LineIcons.shoppingBag,
-                color: Theme.of(context).colorScheme.primary,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header Row
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          LineIcons.shoppingBag,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Order #${order.id.substring(0, 8)}',
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            _buildStatusChip(orderData['status'] ?? 'pending'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  // Order Info
+                  Text(
+                    DateFormat('MMM d, yyyy • h:mm a')
+                        .format((orderData['createdAt'] as Timestamp).toDate()),
+                    style: TextStyle(
+                      color: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.color
+                          ?.withOpacity(0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '$totalItems items',
+                        style: TextStyle(
+                          color: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.color
+                              ?.withOpacity(0.7),
+                        ),
+                      ),
+                      Text(
+                        '\$${orderData['total']?.toStringAsFixed(2) ?? '0.00'}',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ),
-            title: Row(
-              children: [
-                Text(
-                  'Order #${order.id.substring(0, 8)}',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                _buildStatusChip(orderData['status'] ?? 'pending'),
-              ],
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 8),
-                Text(
-                  DateFormat('MMM d, yyyy • h:mm a')
-                      .format((orderData['createdAt'] as Timestamp).toDate()),
-                  style: TextStyle(
-                    color: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.color
-                        ?.withOpacity(0.7),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '$totalItems items • \$${orderData['total']?.toStringAsFixed(2) ?? '0.00'}',
-                  style: TextStyle(
-                    color: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.color
-                        ?.withOpacity(0.7),
-                  ),
-                ),
-              ],
             ),
           ),
         );
@@ -328,9 +364,46 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
 
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: _buildOrderDetails(context, orderData, items, selectedOrder.id),
+      child: Column(
+        children: [
+          // Add close button header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              border: Border(
+                bottom: BorderSide(
+                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                ),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Order Details',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(LineIcons.times),
+                  onPressed: () => setState(() => selectedOrderId = null),
+                  tooltip: 'Close details',
+                ),
+              ],
+            ),
+          ),
+          // Wrap the existing content in Expanded and SingleChildScrollView
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: _buildOrderDetails(
+                  context, orderData, items, selectedOrder.id),
+            ),
+          ),
+        ],
       ),
     );
   }
