@@ -1,17 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:multi_vendor_ecommerce_app_admin_panel/screens/analytics_screen.dart';
-import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_advertisements_screen.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_orders_screen.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_users_screen.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_products_screen.dart';
-import 'package:multi_vendor_ecommerce_app_admin_panel/screens/settings_screen.dart';
-import 'package:multi_vendor_ecommerce_app_admin_panel/screens/sign_in_screen.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/services/admin_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:multi_vendor_ecommerce_app_admin_panel/widgets/admin_drawer.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   final AdminService _adminService = AdminService();
@@ -22,7 +18,7 @@ class AdminDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(context),
-      drawer: _buildAdminDrawer(context),
+      drawer: const AdminDrawer(),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _adminService.getPlatformAnalytics(),
         builder: (context, snapshot) {
@@ -56,7 +52,8 @@ class AdminDashboardScreen extends StatelessWidget {
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
       elevation: 0,
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      foregroundColor: Colors.black,
       title: Text(
         'Dashboard',
         style: GoogleFonts.poppins(
@@ -199,109 +196,6 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildAdminDrawer(BuildContext context) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                const CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.white,
-                  child: Icon(LineIcons.userShield, size: 30),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Admin Panel',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          _buildDrawerItem(
-            context,
-            icon: LineIcons.home,
-            title: 'Dashboard',
-            onTap: () => Navigator.pop(context),
-          ),
-          _buildDrawerItem(
-            context,
-            icon: LineIcons.users,
-            title: 'Manage Users',
-            onTap: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const ManageUsersScreen()),
-            ),
-          ),
-          _buildDrawerItem(
-            context,
-            icon: LineIcons.shoppingBag,
-            title: 'Manage Products',
-            onTap: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const ManageProductsScreen()),
-            ),
-          ),
-          _buildDrawerItem(
-            context,
-            icon: LineIcons.shoppingCart,
-            title: 'Manage Orders',
-            onTap: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const ManageOrdersScreen()),
-            ),
-          ),
-          _buildDrawerItem(
-            context,
-            icon: LineIcons.ad,
-            title: 'Manage Ads',
-            onTap: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => const ManageAdvertisementsScreen()),
-            ),
-          ),
-          _buildDrawerItem(
-            context,
-            icon: LineIcons.alternateSignOut,
-            title: 'Sign Out',
-            onTap: () async {
-              await FirebaseAuth.instance.signOut();
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const SignInScreen()),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDrawerItem(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title, style: GoogleFonts.poppins()),
-      onTap: onTap,
     );
   }
 
