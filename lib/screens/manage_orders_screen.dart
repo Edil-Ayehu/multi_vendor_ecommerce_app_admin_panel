@@ -66,23 +66,27 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
                 ),
               ),
             ),
-            child: TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-              indicatorSize: TabBarIndicatorSize.tab,
-              dividerColor: Colors.transparent,
-              indicator: const BoxDecoration(),
-              labelColor: Theme.of(context).colorScheme.primary,
-              unselectedLabelColor: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
-              tabs: [
-                _buildTab('All', LineIcons.shoppingBag, Colors.blue, 0),
-                _buildTab('Pending', LineIcons.clock, Colors.orange, 1),
-                _buildTab('Processing', LineIcons.spinner, Colors.blue, 2),
-                _buildTab('Shipped', LineIcons.truck, Colors.purple, 3),
-                _buildTab('Delivered', LineIcons.checkCircle, Colors.green, 4),
-                _buildTab('Cancelled', LineIcons.times, Colors.red, 5),
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return TabBar(
+                  controller: _tabController,
+                  isScrollable: false,
+                  labelPadding: EdgeInsets.zero,
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  dividerColor: Colors.transparent,
+                  indicator: const BoxDecoration(),
+                  labelColor: Theme.of(context).colorScheme.primary,
+                  unselectedLabelColor: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                  tabs: [
+                    _buildTab('All', LineIcons.shoppingBag, Colors.blue, 0, constraints.maxWidth / 6),
+                    _buildTab('Pending', LineIcons.clock, Colors.orange, 1, constraints.maxWidth / 6),
+                    _buildTab('Processing', LineIcons.spinner, Colors.blue, 2, constraints.maxWidth / 6),
+                    _buildTab('Shipped', LineIcons.truck, Colors.purple, 3, constraints.maxWidth / 6),
+                    _buildTab('Delivered', LineIcons.checkCircle, Colors.green, 4, constraints.maxWidth / 6),
+                    _buildTab('Cancelled', LineIcons.times, Colors.red, 5, constraints.maxWidth / 6),
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -116,44 +120,51 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
     );
   }
 
-  Widget _buildTab(String title, IconData icon, Color color, int index) {
+  Widget _buildTab(String title, IconData icon, Color color, int index, double width) {
     final isSelected = _tabController.index == index;
     
     return Tab(
       height: 56,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.1) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? color : Colors.transparent,
-            width: 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 20,
-              color: isSelected 
-                  ? color 
-                  : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+      child: SizedBox(
+        width: width - 8,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? color.withOpacity(0.1) : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? color : Colors.transparent,
+              width: 1,
             ),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 18,
                 color: isSelected 
                     ? color 
                     : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
               ),
-            ),
-          ],
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  title,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: isSelected 
+                        ? color 
+                        : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
