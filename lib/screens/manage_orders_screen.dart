@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:line_icons/line_icons.dart';
@@ -296,10 +297,19 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
         Expanded(
           child: Row(
             children: [
-              Expanded(
-                flex: 3,
-                child: _buildOrdersList(currentPageOrders),
-              ),
+              if (selectedOrderId != null && isSmallScreen)
+                // Full screen details for small screens
+                Expanded(
+                  child: _buildOrderDetailsView(filteredOrders),
+                )
+              else
+                // Normal layout
+                Expanded(
+                  flex: 3,
+                  child: _buildOrdersList(currentPageOrders),
+                ),
+
+              // Show details panel only on larger screens
               if (selectedOrderId != null && !isSmallScreen) ...[
                 Container(width: 1, color: Colors.grey[300]),
                 Expanded(
@@ -310,7 +320,8 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
             ],
           ),
         ),
-        if (totalPages > 1)
+        // Show pagination only when order list is visible
+        if (totalPages > 1 && (selectedOrderId == null || !isSmallScreen))
           Container(
             padding: const EdgeInsets.symmetric(vertical: 16),
             decoration: BoxDecoration(
@@ -349,7 +360,39 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
   }
 
   Widget _buildOrderDetailsView(List<DocumentSnapshot> orders) {
-    // Find the selected order or return error widget if not found
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(LineIcons.arrowLeft, color: Colors.black),
+          onPressed: () => setState(() => selectedOrderId = null),
+        ),
+        title: Text(
+          'Order Details',
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Colors.black),
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildOrderDetailsContent(orders),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrderDetailsContent(List<DocumentSnapshot> orders) {
+    // Find the selected order
     final selectedOrder = orders.firstWhereOrNull(
       (doc) => doc.id == selectedOrderId,
     );
@@ -366,28 +409,7 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
     final orderData = selectedOrder.data() as Map<String, dynamic>;
     final items = List<Map<String, dynamic>>.from(orderData['items'] ?? []);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          // Back button for mobile view
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(LineIcons.arrowLeft),
-                onPressed: () => setState(() => selectedOrderId = null),
-              ),
-              Text(
-                'Back to Orders',
-                style: GoogleFonts.poppins(),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildOrderDetails(context, orderData, items, selectedOrder.id),
-        ],
-      ),
-    );
+    return _buildOrderDetails(context, orderData, items, selectedOrder.id);
   }
 
   Widget _buildOrdersList(List<DocumentSnapshot> orders) {
@@ -513,28 +535,10 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
   }
 
   Widget _buildOrderDetailsPanel(List<DocumentSnapshot> orders) {
-    // Find the selected order or return error widget if not found
-    final selectedOrder = orders.firstWhereOrNull(
-      (doc) => doc.id == selectedOrderId,
-    );
-
-    if (selectedOrder == null) {
-      return Center(
-        child: Text(
-          'Select an order to view details',
-          style: GoogleFonts.poppins(fontSize: 16),
-        ),
-      );
-    }
-
-    final orderData = selectedOrder.data() as Map<String, dynamic>;
-    final items = List<Map<String, dynamic>>.from(orderData['items'] ?? []);
-
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
         children: [
-          // Add close button header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
@@ -563,12 +567,10 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
               ],
             ),
           ),
-          // Wrap the existing content in Expanded and SingleChildScrollView
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
-              child: _buildOrderDetails(
-                  context, orderData, items, selectedOrder.id),
+              child: _buildOrderDetailsContent(orders),
             ),
           ),
         ],
@@ -582,12 +584,14 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
     List<Map<String, dynamic>> items,
     String orderId,
   ) {
+    final isSmallScreen = MediaQuery.of(context).size.width <= 600;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Order Summary Card
         Container(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
@@ -633,7 +637,7 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
             ],
           ),
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: isSmallScreen ? 16 : 24),
 
         // Items Section
         Card(
@@ -644,101 +648,104 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
               color: Theme.of(context).dividerColor.withOpacity(0.1),
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Items (${items.length})',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+          child: Padding(
+            padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Items (${items.length})',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    Text(
-                      '\$${orderData['total']?.toStringAsFixed(2) ?? '0.00'}',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.primary,
+                      Text(
+                        '\$${orderData['total']?.toStringAsFixed(2) ?? '0.00'}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const Divider(height: 1, color: Colors.grey),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  return Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      border: index != items.length - 1
-                          ? Border(
-                              bottom: BorderSide(
-                                color: Theme.of(context)
-                                    .dividerColor
-                                    .withOpacity(0.1),
-                              ),
-                            )
-                          : null,
-                    ),
-                    child: Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: _buildProductImage(item['image']),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item['name'] ?? 'Unknown Product',
-                                style: GoogleFonts.poppins(
-                                    fontWeight: FontWeight.w500),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${item['quantity']} × \$${item['price']?.toStringAsFixed(2)}',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 13,
+                const Divider(height: 1, color: Colors.grey),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        border: index != items.length - 1
+                            ? Border(
+                                bottom: BorderSide(
                                   color: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.color
-                                      ?.withOpacity(0.7),
+                                      .dividerColor
+                                      .withOpacity(0.1),
                                 ),
-                              ),
-                            ],
+                              )
+                            : null,
+                      ),
+                      child: Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: _buildProductImage(item['image']),
                           ),
-                        ),
-                        Text(
-                          '\$${(item['quantity'] * (item['price'] ?? 0)).toStringAsFixed(2)}',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.primary,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item['name'] ?? 'Unknown Product',
+                                  style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${item['quantity']} × \$${item['price']?.toStringAsFixed(2)}',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color
+                                        ?.withOpacity(0.7),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ],
+                          Text(
+                            '\$${(item['quantity'] * (item['price'] ?? 0)).toStringAsFixed(2)}',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
-        const SizedBox(height: 24),
 
         // Status Update Section
+        SizedBox(height: isSmallScreen ? 16 : 24),
         Card(
           elevation: 0,
           shape: RoundedRectangleBorder(
@@ -748,7 +755,7 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
