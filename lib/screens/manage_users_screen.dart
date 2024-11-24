@@ -71,7 +71,10 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
               Tab(
                 height: 52,
                 child: Container(
-                  padding: const EdgeInsets.all(16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  constraints:
+                      BoxConstraints(minWidth: isSmallScreen ? 160 : 260),
                   decoration: BoxDecoration(
                     color: _tabController.index == 0
                         ? Colors.blue.withOpacity(0.1)
@@ -86,6 +89,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
                         Icons.person_rounded,
@@ -120,7 +124,10 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
               Tab(
                 height: 52,
                 child: Container(
-                  padding: const EdgeInsets.all(16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  constraints:
+                      BoxConstraints(minWidth: isSmallScreen ? 160 : 260),
                   decoration: BoxDecoration(
                     color: _tabController.index == 1
                         ? Colors.purple.withOpacity(0.1)
@@ -135,6 +142,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
                         Icons.store_rounded,
