@@ -5,6 +5,7 @@ import 'package:multi_vendor_ecommerce_app_admin_panel/services/admin_service.da
 import 'dart:math' as math;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'dart:math' show max;
 
 class AnalyticsScreen extends StatelessWidget {
   final AdminService _adminService = AdminService();
@@ -53,7 +54,6 @@ class AnalyticsScreen extends StatelessWidget {
               ),
             );
           }
-
           final data = snapshot.data!;
           return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
@@ -802,88 +802,225 @@ class AnalyticsScreen extends StatelessWidget {
           return const Center(child: Text('No advertisement data available'));
         }
 
-        return Container(
-          height: 200,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                spreadRadius: 2,
-                blurRadius: 5,
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isSmallScreen = constraints.maxWidth < 600;
+            final isVerySmallHeight = constraints.maxHeight < 400;
+
+            return Container(
+              constraints: BoxConstraints(
+                minHeight: isSmallScreen ? 400 : 300,
+                maxHeight: isSmallScreen ? 450 : 400,
               ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Advertisement Distribution',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+              padding: EdgeInsets.all(isSmallScreen ? 12 : 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: PieChart(
-                        PieChartData(
-                          sectionsSpace: 0,
-                          centerSpaceRadius: 30,
-                          sections: [
-                            PieChartSectionData(
-                              color: Colors.green,
-                              value: (data['active'] ?? 0).toDouble(),
-                              title:
-                                  '${((data['active'] ?? 0) / total * 100).toStringAsFixed(1)}%',
-                              radius: 50,
-                              titleStyle: const TextStyle(color: Colors.white),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header Section
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Advertisement Status',
+                              style: GoogleFonts.poppins(
+                                fontSize: isSmallScreen ? 14 : 18,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                            PieChartSectionData(
-                              color: Colors.red,
-                              value: (data['expired'] ?? 0).toDouble(),
-                              title:
-                                  '${((data['expired'] ?? 0) / total * 100).toStringAsFixed(1)}%',
-                              radius: 50,
-                              titleStyle: const TextStyle(color: Colors.white),
+                            if (!isVerySmallHeight) ...[
+                              const SizedBox(height: 1),
+                              Text(
+                                'Total Ads: $total',
+                                style: GoogleFonts.poppins(
+                                  fontSize: isSmallScreen ? 10 : 13,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.refresh,
+                                size: 12, color: Colors.grey[600]),
+                            const SizedBox(width: 3),
+                            Text(
+                              'Real-time',
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                color: Colors.grey[600],
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildAdLegendItem(
-                              'Active', Colors.green, data['active'] ?? 0),
-                          const SizedBox(height: 8),
-                          _buildAdLegendItem(
-                              'Expired', Colors.red, data['expired'] ?? 0),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Total Ads: ${data['total']}',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
-                            ),
+                    ],
+                  ),
+                  SizedBox(height: isSmallScreen ? 6 : 16),
+
+                  // Chart Section
+                  Expanded(
+                    child: isSmallScreen
+                        ? Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: _buildAdsPieChart(
+                                    data, total, isSmallScreen),
+                              ),
+                              if (!isVerySmallHeight) const SizedBox(height: 4),
+                              Expanded(
+                                flex: 2,
+                                child:
+                                    _buildAdsLegend(data, total, isSmallScreen),
+                              ),
+                            ],
+                          )
+                        : Row(
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: _buildAdsPieChart(
+                                    data, total, isSmallScreen),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                flex: 2,
+                                child:
+                                    _buildAdsLegend(data, total, isSmallScreen),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
+    );
+  }
+
+  Widget _buildAdsPieChart(
+      Map<String, int> data, int total, bool isSmallScreen) {
+    return PieChart(
+      PieChartData(
+        sectionsSpace: 2,
+        centerSpaceRadius: isSmallScreen ? 30 : 50,
+        sections: [
+          _buildAdSection('Active', data['active'] ?? 0, total, Colors.green,
+              isSmallScreen),
+          _buildAdSection('Expired', data['expired'] ?? 0, total, Colors.red,
+              isSmallScreen),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdsLegend(Map<String, int> data, int total, bool isSmallScreen) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildAdvertisementLegendItem(
+            'Active', data['active'] ?? 0, total, Colors.green, isSmallScreen),
+        SizedBox(height: isSmallScreen ? 8 : 16),
+        _buildAdvertisementLegendItem(
+            'Expired', data['expired'] ?? 0, total, Colors.red, isSmallScreen),
+      ],
+    );
+  }
+
+  PieChartSectionData _buildAdSection(
+      String label, int count, int total, Color color, bool isSmallScreen) {
+    final percentage = total > 0 ? (count / total * 100) : 0;
+    return PieChartSectionData(
+      color: color.withOpacity(0.8),
+      value: count.toDouble(),
+      title: percentage >= 5 ? '${percentage.toStringAsFixed(1)}%' : '',
+      radius: isSmallScreen ? 45 : 60,
+      titleStyle: GoogleFonts.poppins(
+        fontSize: isSmallScreen ? 12 : 14,
+        fontWeight: FontWeight.w600,
+        color: Colors.white,
+      ),
+    );
+  }
+
+  Widget _buildAdvertisementLegendItem(
+      String label, int count, int total, Color color, bool isSmallScreen) {
+    final percentage = total > 0 ? (count / total * 100) : 0;
+    return Container(
+      padding: EdgeInsets.all(isSmallScreen ? 8 : 16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: isSmallScreen ? 8 : 12,
+            height: isSmallScreen ? 8 : 12,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          SizedBox(width: isSmallScreen ? 8 : 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.poppins(
+                    fontSize: isSmallScreen ? 12 : 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  '$count ads (${percentage.toStringAsFixed(1)}%)',
+                  style: GoogleFonts.poppins(
+                    fontSize: isSmallScreen ? 10 : 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1037,26 +1174,6 @@ class AnalyticsScreen extends StatelessWidget {
         ),
         const SizedBox(width: 4),
         Text(label, style: const TextStyle(fontSize: 12)),
-      ],
-    );
-  }
-
-  Widget _buildAdLegendItem(String label, Color color, int count) {
-    return Row(
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          '$label ($count)',
-          style: GoogleFonts.poppins(fontSize: 12),
-        ),
       ],
     );
   }
