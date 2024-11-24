@@ -36,18 +36,18 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Theme.of(context).colorScheme.primary,
-                Theme.of(context).colorScheme.secondary,
-              ],
-            ),
+        backgroundColor: Colors.transparent,
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(LineIcons.arrowLeft, color: Colors.black),
+        ),
+        title: Text(
+          'Manage Products',
+          style: GoogleFonts.poppins(
+            color: Theme.of(context).textTheme.titleLarge?.color,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        title: const Text('Manage Products',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: _adminService.getAllProducts(),
