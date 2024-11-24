@@ -246,40 +246,47 @@ class AdminService {
           .orderBy('createdAt', descending: false)
           .get();
 
-      // Create a map to store monthly user counts
-      Map<String, int> monthlyUsers = {};
-
-      // Get current date for last 6 months data
+      Map<String, Map<String, int>> monthlyUsers = {};
       DateTime now = DateTime.now();
+      
+      // Initialize last 6 months data
       for (int i = 5; i >= 0; i--) {
         DateTime month = DateTime(now.year, now.month - i, 1);
         String monthKey = '${month.year}-${month.month.toString().padLeft(2, '0')}';
-        monthlyUsers[monthKey] = 0;
+        monthlyUsers[monthKey] = {
+          'customers': 0,
+          'vendors': 0,
+        };
       }
 
-      // Count users per month
+      // Count users per month by role
       for (var doc in usersSnapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
         if (data['createdAt'] != null) {
           final DateTime date = (data['createdAt'] as Timestamp).toDate();
           final String monthKey = '${date.year}-${date.month.toString().padLeft(2, '0')}';
+          final String role = (data['role'] as String?) ?? 'customer';
+          
           if (monthlyUsers.containsKey(monthKey)) {
-            monthlyUsers[monthKey] = (monthlyUsers[monthKey] ?? 0) + 1;
+            if (role == 'vendor') {
+              monthlyUsers[monthKey]!['vendors'] = (monthlyUsers[monthKey]!['vendors'] ?? 0) + 1;
+            } else {
+              monthlyUsers[monthKey]!['customers'] = (monthlyUsers[monthKey]!['customers'] ?? 0) + 1;
+            }
           }
         }
       }
 
-      // Convert to list of maps and sort by date
+      // Convert to list format
       List<Map<String, dynamic>> result = monthlyUsers.entries.map((entry) {
         return {
           'date': entry.key,
-          'count': entry.value,
+          'customers': entry.value['customers'],
+          'vendors': entry.value['vendors'],
         };
       }).toList();
 
       result.sort((a, b) => a['date'].compareTo(b['date']));
-      
-      print('User growth data: $result'); // Debug print
       return result;
     } catch (e) {
       print('Error getting user growth data: $e');

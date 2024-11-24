@@ -437,83 +437,97 @@ class AnalyticsScreen extends StatelessWidget {
           return const Center(child: Text('No user growth data available'));
         }
 
-        // Calculate max value for scaling
-        final maxCount = data.fold<int>(
-          0,
-          (max, item) => math.max(max, item['count'] as int),
-        );
-
-        // Create bar groups
-        final barGroups = data.asMap().entries.map((entry) {
-          return BarChartGroupData(
-            x: entry.key,
-            barRods: [
-              BarChartRodData(
-                toY: entry.value['count'].toDouble(),
-                color: Colors.blue,
-                width: 16,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(4)),
-              ),
-            ],
-          );
-        }).toList();
+        // Find max value for better scaling
+        double maxY = 0;
+        for (var item in data) {
+          maxY = math.max(maxY, (item['customers'] as int).toDouble());
+          maxY = math.max(maxY, (item['vendors'] as int).toDouble());
+        }
 
         return Container(
-          height: 300,
+          height: 350,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(20),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'User Growth',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'User Growth',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        'Last ${data.length} months',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      _buildUserGrowthLegendItem(
+                          'Customers', const Color(0xFF6366F1)),
+                      const SizedBox(width: 16),
+                      _buildUserGrowthLegendItem(
+                          'Vendors', const Color(0xFF10B981)),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Last ${data.length} months',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               Expanded(
                 child: BarChart(
                   BarChartData(
-                    gridData: FlGridData(
-                      show: true,
-                      drawVerticalLine: false,
-                      horizontalInterval: maxCount > 5 ? maxCount / 5 : 1,
-                      getDrawingHorizontalLine: (value) {
-                        return FlLine(
-                          color: Colors.grey.withOpacity(0.1),
-                          strokeWidth: 1,
-                        );
-                      },
+                    alignment: BarChartAlignment.spaceAround,
+                    maxY: maxY * 1.2,
+                    barTouchData: BarTouchData(
+                      enabled: true,
+                      touchTooltipData: BarTouchTooltipData(
+                        // tooltipBgColor: Colors.blueGrey.withOpacity(0.9),
+                        tooltipRoundedRadius: 8,
+                        tooltipMargin: 8,
+                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                          final item = data[group.x.toInt()];
+                          final value = rodIndex == 0
+                              ? item['customers']
+                              : item['vendors'];
+                          final type = rodIndex == 0 ? 'Customers' : 'Vendors';
+                          return BarTooltipItem(
+                            '$type\n$value',
+                            GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          );
+                        },
+                      ),
                     ),
                     titlesData: FlTitlesData(
                       show: true,
-                      rightTitles: AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                      topTitles: AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
+                      rightTitles:
+                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles:
+                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
                       bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
@@ -525,10 +539,9 @@ class AnalyticsScreen extends StatelessWidget {
                               return Padding(
                                 padding: const EdgeInsets.only(top: 8.0),
                                 child: Text(
-                                  date.substring(
-                                      5), // Show only month part (MM)
-                                  style: const TextStyle(
-                                    color: Colors.grey,
+                                  date.substring(5),
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.grey[600],
                                     fontSize: 12,
                                   ),
                                 ),
@@ -541,12 +554,12 @@ class AnalyticsScreen extends StatelessWidget {
                       leftTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
-                          interval: maxCount > 5 ? maxCount / 5 : 1,
+                          reservedSize: 30,
                           getTitlesWidget: (value, meta) {
                             return Text(
                               value.toInt().toString(),
-                              style: const TextStyle(
-                                color: Colors.grey,
+                              style: GoogleFonts.poppins(
+                                color: Colors.grey[600],
                                 fontSize: 12,
                               ),
                             );
@@ -554,19 +567,40 @@ class AnalyticsScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    borderData: FlBorderData(show: false),
-                    barGroups: barGroups,
-                    barTouchData: BarTouchData(
-                      enabled: true,
-                      touchTooltipData: BarTouchTooltipData(
-                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                          return BarTooltipItem(
-                            '${data[group.x]['count']} users',
-                            const TextStyle(color: Colors.white),
-                          );
-                        },
-                      ),
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      horizontalInterval: maxY > 5 ? maxY / 5 : 1,
+                      getDrawingHorizontalLine: (value) {
+                        return FlLine(
+                          color: Colors.grey.withOpacity(0.1),
+                          strokeWidth: 1,
+                        );
+                      },
                     ),
+                    borderData: FlBorderData(show: false),
+                    barGroups: data.asMap().entries.map((entry) {
+                      final customers = entry.value['customers'] as int;
+                      final vendors = entry.value['vendors'] as int;
+
+                      return BarChartGroupData(
+                        x: entry.key,
+                        barRods: [
+                          BarChartRodData(
+                            toY: customers.toDouble(),
+                            color: const Color(0xFF6366F1),
+                            width: 12,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                          BarChartRodData(
+                            toY: vendors.toDouble(),
+                            color: const Color(0xFF10B981),
+                            width: 12,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ],
+                      );
+                    }).toList(),
                   ),
                 ),
               ),
@@ -574,6 +608,29 @@ class AnalyticsScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildUserGrowthLegendItem(String label, Color color) {
+    return Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
     );
   }
 
