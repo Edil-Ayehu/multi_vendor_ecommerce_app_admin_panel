@@ -51,7 +51,8 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
     _tabController.addListener(() {
       setState(() {
         // Don't reset the page when changing tabs
-        currentPage = _currentPages[_getStatusForIndex(_tabController.index)] ?? 1;
+        currentPage =
+            _currentPages[_getStatusForIndex(_tabController.index)] ?? 1;
       });
     });
   }
@@ -284,7 +285,7 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
     final totalOrders = filteredOrders.length;
     final totalPages = (totalOrders / ordersPerPage).ceil();
     final currentPageForStatus = _currentPages[status] ?? 1;
-    
+
     final startIndex = (currentPageForStatus - 1) * ordersPerPage;
     final endIndex = min(startIndex + ordersPerPage, totalOrders);
     final currentPageOrders = filteredOrders.sublist(startIndex, endIndex);
@@ -584,100 +585,75 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Order Summary
-        Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(
-              color: Theme.of(context).dividerColor.withOpacity(0.1),
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Order Summary',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    _buildStatusChip(orderData['status'] ?? 'pending'),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Order Date: ${DateFormat('MMM d, yyyy • h:mm a').format((orderData['createdAt'] as Timestamp).toDate())}',
-                  style: GoogleFonts.poppins(fontSize: 14),
-                ),
+        // Order Summary Card
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                Theme.of(context).colorScheme.secondary.withOpacity(0.05),
               ],
             ),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Order #${orderId.substring(0, 8)}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        DateFormat('MMM d, yyyy • h:mm a').format(
+                            (orderData['createdAt'] as Timestamp).toDate()),
+                        style: GoogleFonts.poppins(
+                          color: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.color
+                              ?.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                  _buildStatusChip(orderData['status'] ?? 'pending'),
+                ],
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
 
-        // Order Items
+        // Items Section
         Card(
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             side: BorderSide(
               color: Theme.of(context).dividerColor.withOpacity(0.1),
             ),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Items',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) => const Divider(),
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: _buildProductImage(item['image']),
-                      ),
-                      title: Text(
-                        item['name'] ?? 'Unknown Product',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
-                      ),
-                      subtitle: Text(
-                        'Quantity: ${item['quantity']} × \$${item['price']?.toStringAsFixed(2)}',
-                        style: GoogleFonts.poppins(fontSize: 13),
-                      ),
-                      trailing: Text(
-                        '\$${(item['quantity'] * (item['price'] ?? 0)).toStringAsFixed(2)}',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                      ),
-                    );
-                  },
-                ),
-                const Divider(),
-                Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Total',
+                      'Items (${items.length})',
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -693,17 +669,80 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              const Divider(height: 1, color: Colors.grey),
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  return Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      border: index != items.length - 1
+                          ? Border(
+                              bottom: BorderSide(
+                                color: Theme.of(context)
+                                    .dividerColor
+                                    .withOpacity(0.1),
+                              ),
+                            )
+                          : null,
+                    ),
+                    child: Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: _buildProductImage(item['image']),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item['name'] ?? 'Unknown Product',
+                                style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w500),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${item['quantity']} × \$${item['price']?.toStringAsFixed(2)}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.color
+                                      ?.withOpacity(0.7),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          '\$${(item['quantity'] * (item['price'] ?? 0)).toStringAsFixed(2)}',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
 
-        // Status Update Buttons
+        // Status Update Section
         Card(
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             side: BorderSide(
               color: Theme.of(context).dividerColor.withOpacity(0.1),
             ),
@@ -721,21 +760,26 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
                   ),
                 ),
                 const SizedBox(height: 16),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _buildStatusButton(
-                        context, orderId, 'pending', orderData['status']),
-                    _buildStatusButton(
-                        context, orderId, 'processing', orderData['status']),
-                    _buildStatusButton(
-                        context, orderId, 'shipped', orderData['status']),
-                    _buildStatusButton(
-                        context, orderId, 'delivered', orderData['status']),
-                    _buildStatusButton(
-                        context, orderId, 'cancelled', orderData['status']),
-                  ],
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildStatusButton(
+                          context, orderId, 'pending', orderData['status']),
+                      const SizedBox(width: 8),
+                      _buildStatusButton(
+                          context, orderId, 'processing', orderData['status']),
+                      const SizedBox(width: 8),
+                      _buildStatusButton(
+                          context, orderId, 'shipped', orderData['status']),
+                      const SizedBox(width: 8),
+                      _buildStatusButton(
+                          context, orderId, 'delivered', orderData['status']),
+                      const SizedBox(width: 8),
+                      _buildStatusButton(
+                          context, orderId, 'cancelled', orderData['status']),
+                    ],
+                  ),
                 ),
               ],
             ),
