@@ -135,24 +135,21 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
           final bData = b.data() as Map<String, dynamic>;
           final aTime = (aData['createdAt'] as Timestamp).toDate();
           final bTime = (bData['createdAt'] as Timestamp).toDate();
-          return bTime.compareTo(aTime); // Reverse order for most recent first
+          return bTime.compareTo(aTime);
         });
 
-        if (isVendorTab) {
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            itemCount: users.length,
-            itemBuilder: (context, index) {
-              final userData = users[index].data() as Map<String, dynamic>;
-              return _buildVendorTile(context, userData, users[index].id);
-            },
+        if (users.isEmpty) {
+          return Center(
+            child: Text(
+              'No ${isVendorTab ? 'vendors' : 'customers'} found',
+              style: GoogleFonts.poppins(fontSize: 16),
+            ),
           );
         }
 
         // For small screens, show either the list or the details
-        if (isSmallScreen && selectedUserId != null) {
-          final selectedUser =
-              users.firstWhere((doc) => doc.id == selectedUserId);
+        if (isSmallScreen && selectedUserId != null && !isVendorTab) {
+          final selectedUser = users.firstWhere((doc) => doc.id == selectedUserId);
           return SingleChildScrollView(
             child: Column(
               children: [
@@ -173,123 +170,28 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
           );
         }
 
-        // Split view for larger screens
         return Row(
           children: [
             Expanded(
-              flex: selectedUserId != null ? 3 : 5,
-              child: ListView.builder(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              flex: selectedUserId != null && !isSmallScreen && !isVendorTab ? 3 : 5,
+              child: GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: _calculateCrossAxisCount(MediaQuery.of(context).size.width),
+                  childAspectRatio: isVendorTab ? 1.2 : 1,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                ),
                 itemCount: users.length,
                 itemBuilder: (context, index) {
                   final userData = users[index].data() as Map<String, dynamic>;
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    decoration: BoxDecoration(
-                      color: selectedUserId == users[index].id
-                          ? Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withOpacity(0.1)
-                          : Theme.of(context).cardColor,
-                      border: Border.all(
-                        width: 1,
-                        color: Colors.grey.withOpacity(0.1),
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: ListTile(
-                      onTap: () =>
-                          setState(() => selectedUserId = users[index].id),
-                      contentPadding: const EdgeInsets.all(12),
-                      leading: Stack(
-                        children: [
-                          CircleAvatar(
-                            radius: 24,
-                            backgroundImage: NetworkImage(
-                              userData['profileImage'] ??
-                                  'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y',
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: userData['isBlocked'] == true
-                                    ? Colors.red
-                                    : Colors.green,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color:
-                                      Theme.of(context).scaffoldBackgroundColor,
-                                  width: 2,
-                                ),
-                              ),
-                              child: Icon(
-                                userData['isBlocked'] == true
-                                    ? Icons.block
-                                    : Icons.check,
-                                size: 12,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      title: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            userData['fullName'] ?? 'N/A',
-                            style: const TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              'Customer',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Theme.of(context).colorScheme.primary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 4),
-                          Text(userData['email'] ?? 'N/A'),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Joined ${timeago.format(userData['createdAt'].toDate())}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.color
-                                  ?.withOpacity(0.7),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
+                  return isVendorTab
+                      ? _buildVendorCard(context, userData, users[index].id)
+                      : _buildCustomerCard(context, userData, users[index].id);
                 },
               ),
             ),
-            if (selectedUserId != null && !isSmallScreen) ...[
+            if (selectedUserId != null && !isSmallScreen && !isVendorTab) ...[
               Container(width: 1, color: Colors.grey[300]),
               Expanded(
                 flex: 2,
@@ -299,8 +201,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                       ListTile(
                         trailing: IconButton(
                           icon: const Icon(Icons.close),
-                          onPressed: () =>
-                              setState(() => selectedUserId = null),
+                          onPressed: () => setState(() => selectedUserId = null),
                         ),
                         title: const Text('Customer Details'),
                       ),
@@ -319,6 +220,221 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
           ],
         );
       },
+    );
+  }
+
+  int _calculateCrossAxisCount(double width) {
+    final bool isDetailsOpen = selectedUserId != null;
+    
+    // Reduce the width thresholds when details panel is open
+    if (isDetailsOpen) {
+      if (width > 1500) return 3;
+      if (width > 1200) return 2;
+      return 1;
+    }
+    
+    // Original thresholds when details panel is closed
+    if (width > 1200) return 4;
+    if (width > 900) return 3;
+    if (width > 600) return 2;
+    return 1;
+  }
+
+  Widget _buildCustomerCard(BuildContext context, Map<String, dynamic> userData, String userId) {
+    final bool isBlocked = userData['isBlocked'] ?? false;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: selectedUserId == userId
+              ? Theme.of(context).colorScheme.primary
+              : Colors.grey.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: InkWell(
+        onTap: () => setState(() => selectedUserId = userId),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundImage: NetworkImage(
+                      userData['profileImage'] ??
+                          'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y',
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: isBlocked ? Colors.red : Colors.green,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Theme.of(context).scaffoldBackgroundColor,
+                          width: 2,
+                        ),
+                      ),
+                      child: Icon(
+                        isBlocked ? Icons.block : Icons.check,
+                        size: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                userData['fullName'] ?? 'N/A',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                userData['email'] ?? 'N/A',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Customer',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: Colors.blue,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVendorCard(BuildContext context, Map<String, dynamic> userData, String userId) {
+    final bool isBlocked = userData['isBlocked'] ?? false;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: Colors.grey.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                CircleAvatar(
+                  radius: 40,
+                  backgroundImage: NetworkImage(
+                    userData['profileImage'] ??
+                        'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y',
+                  ),
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: isBlocked ? Colors.red : Colors.green,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        width: 2,
+                      ),
+                    ),
+                    child: Icon(
+                      isBlocked ? Icons.block : Icons.check,
+                      size: 12,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              userData['fullName'] ?? 'N/A',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              userData['email'] ?? 'N/A',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.purple.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'Vendor',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: Colors.purple,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Switch.adaptive(
+              value: !isBlocked,
+              activeColor: Theme.of(context).colorScheme.primary,
+              onChanged: (value) => _adminService.toggleUserStatus(userId, !value),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -403,106 +519,6 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
             ]),
           ],
         ],
-      ),
-    );
-  }
-
-  Widget _buildVendorTile(
-      BuildContext context, Map<String, dynamic> userData, String userId) {
-    final bool isBlocked = userData['isBlocked'] ?? false;
-
-    return ListTile(
-      contentPadding: const EdgeInsets.all(16),
-      leading: Stack(
-        children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundColor:
-                Theme.of(context).colorScheme.primary.withOpacity(0.1),
-            backgroundImage: NetworkImage(
-              userData['profileImage'] ??
-                  'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y',
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: isBlocked ? Colors.red : Colors.green,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  width: 2,
-                ),
-              ),
-              child: Icon(
-                isBlocked ? Icons.block : Icons.check,
-                size: 12,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            userData['fullName'] ?? 'N/A',
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.purple.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              'Vendor',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.purple,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 8),
-          _buildInfoRow(
-            Icons.email_outlined,
-            userData['email'] ?? 'N/A',
-            context,
-          ),
-          if (userData['phone'] != null) ...[
-            const SizedBox(height: 4),
-            _buildInfoRow(
-              Icons.phone_outlined,
-              userData['phone'],
-              context,
-            ),
-          ],
-          const SizedBox(height: 4),
-          _buildInfoRow(
-            Icons.access_time,
-            'Joined ${timeago.format(userData['createdAt'].toDate())}',
-            context,
-          ),
-        ],
-      ),
-      trailing: Switch.adaptive(
-        value: !isBlocked,
-        activeColor: Theme.of(context).colorScheme.primary,
-        onChanged: (value) => _adminService.toggleUserStatus(userId, !value),
       ),
     );
   }
