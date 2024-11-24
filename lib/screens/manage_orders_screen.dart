@@ -22,7 +22,10 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 6, vsync: this); // 6 status types
+    _tabController = TabController(length: 6, vsync: this);
+    _tabController.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -51,17 +54,37 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
             fontWeight: FontWeight.w600,
           ),
         ),
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabs: [
-            _buildTab('All Orders', LineIcons.shoppingBag, Colors.blue),
-            _buildTab('Pending', LineIcons.clock, Colors.orange),
-            _buildTab('Processing', LineIcons.spinner, Colors.blue),
-            _buildTab('Shipped', LineIcons.truck, Colors.purple),
-            _buildTab('Delivered', LineIcons.checkCircle, Colors.green),
-            _buildTab('Cancelled', LineIcons.times, Colors.red),
-          ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(72),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              border: Border(
+                bottom: BorderSide(
+                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                ),
+              ),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+              indicatorSize: TabBarIndicatorSize.tab,
+              dividerColor: Colors.transparent,
+              indicator: const BoxDecoration(),
+              labelColor: Theme.of(context).colorScheme.primary,
+              unselectedLabelColor: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+              tabs: [
+                _buildTab('All', LineIcons.shoppingBag, Colors.blue, 0),
+                _buildTab('Pending', LineIcons.clock, Colors.orange, 1),
+                _buildTab('Processing', LineIcons.spinner, Colors.blue, 2),
+                _buildTab('Shipped', LineIcons.truck, Colors.purple, 3),
+                _buildTab('Delivered', LineIcons.checkCircle, Colors.green, 4),
+                _buildTab('Cancelled', LineIcons.times, Colors.red, 5),
+              ],
+            ),
+          ),
         ),
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -93,24 +116,41 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen>
     );
   }
 
-  Widget _buildTab(String title, IconData icon, Color color) {
+  Widget _buildTab(String title, IconData icon, Color color, int index) {
+    final isSelected = _tabController.index == index;
+    
     return Tab(
-      height: 48,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+      height: 56,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
+          color: isSelected ? color.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? color : Colors.transparent,
+            width: 1,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 20, color: color),
+            Icon(
+              icon,
+              size: 20,
+              color: isSelected 
+                  ? color 
+                  : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+            ),
             const SizedBox(width: 8),
             Text(
               title,
               style: GoogleFonts.poppins(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w500,
+                color: isSelected 
+                    ? color 
+                    : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
               ),
             ),
           ],
