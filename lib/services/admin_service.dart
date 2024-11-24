@@ -449,4 +449,12 @@ class AdminService {
         .limit(limit)
         .snapshots();
   }
+
+  Stream<QuerySnapshot> getRecentAds({int limit = 5}) {
+    return FirebaseFirestore.instance
+        .collection('advertisements')
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .snapshots();
+  }
 }

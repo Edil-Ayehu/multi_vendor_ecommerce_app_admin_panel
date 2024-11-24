@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_advertisements_screen.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_orders_screen.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_users_screen.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/screens/manage_products_screen.dart';
@@ -9,6 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/widgets/admin_drawer.dart';
 import 'dart:ui' show Color;
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:intl/intl.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   final AdminService _adminService = AdminService();
@@ -149,12 +151,18 @@ class AdminDashboardScreen extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth > 1200) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          return Column(
             children: [
-              Expanded(child: _buildRecentOrders(context)),
-              const SizedBox(width: 24),
-              Expanded(child: _buildRecentUsers(context)),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: _buildRecentOrders(context)),
+                  const SizedBox(width: 24),
+                  Expanded(child: _buildRecentUsers(context)),
+                ],
+              ),
+              const SizedBox(height: 24),
+              _buildRecentAds(context),
             ],
           );
         } else {
@@ -163,6 +171,8 @@ class AdminDashboardScreen extends StatelessWidget {
               _buildRecentOrders(context),
               const SizedBox(height: 24),
               _buildRecentUsers(context),
+              const SizedBox(height: 24),
+              _buildRecentAds(context),
             ],
           );
         }
@@ -549,6 +559,168 @@ class AdminDashboardScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRecentAds(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Recent Advertisements',
+                  style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                TextButton.icon(
+                  icon: const Icon(LineIcons.ad),
+                  label: const Text('Manage Ads'),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const ManageAdvertisementsScreen()),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            StreamBuilder<QuerySnapshot>(
+              stream: _adminService.getRecentAds(limit: 5),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final ads = snapshot.data!.docs;
+                if (ads.isEmpty) {
+                  return const Center(child: Text('No recent advertisements'));
+                }
+
+                return GridView.builder(
+                  shrinkWrap: true,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    childAspectRatio: 1.4,
+                  ),
+                  itemCount: ads.length,
+                  itemBuilder: (context, index) {
+                    final ad = ads[index].data() as Map<String, dynamic>;
+                    final expiryDate = (ad['expiryDate'] as Timestamp).toDate();
+                    final isExpired = expiryDate.isBefore(DateTime.now());
+
+                    return SizedBox(
+                      width: 280,
+                      child: Card(
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(
+                            color:
+                                Theme.of(context).dividerColor.withOpacity(0.1),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ClipRRect(
+                              borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(8)),
+                              child: Image.network(
+                                ad['imageUrl'] ??
+                                    'https://via.placeholder.com/400x200',
+                                height: 100,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    ad['title'] ?? 'No Title',
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        LineIcons.calendar,
+                                        size: 14,
+                                        color: isExpired
+                                            ? Colors.red
+                                            : Colors.grey[600],
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Expires ${DateFormat('MMM d').format(expiryDate)}',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12,
+                                          color: isExpired
+                                              ? Colors.red
+                                              : Colors.grey[600],
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: ad['isActive'] == true
+                                              ? Colors.green.withOpacity(0.1)
+                                              : Colors.red.withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        child: Text(
+                                          ad['isActive'] == true
+                                              ? 'Active'
+                                              : 'Inactive',
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 11,
+                                            color: ad['isActive'] == true
+                                                ? Colors.green
+                                                : Colors.red,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
