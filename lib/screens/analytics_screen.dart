@@ -660,7 +660,7 @@ class AnalyticsScreen extends StatelessWidget {
 
         if (!snapshot.hasData) {
           return _buildShimmerContainer(
-            height: 400,
+            height: 500,
             baseColor: Colors.grey[300]!,
             highlightColor: Colors.grey[100]!,
           );
@@ -674,14 +674,21 @@ class AnalyticsScreen extends StatelessWidget {
         }
 
         return Container(
-          height: 400,
+          height: 500,
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                const Color(0xFF2C3E50),
+                const Color(0xFF3498DB),
+              ],
+            ),
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withOpacity(0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -697,17 +704,18 @@ class AnalyticsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Order Status',
+                        'Order Distribution',
                         style: GoogleFonts.poppins(
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
+                          color: Colors.white,
                         ),
                       ),
                       Text(
                         'Total Orders: $total',
                         style: GoogleFonts.poppins(
                           fontSize: 14,
-                          color: Colors.grey[600],
+                          color: Colors.white.withOpacity(0.7),
                         ),
                       ),
                     ],
@@ -716,18 +724,19 @@ class AnalyticsScreen extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: Colors.white.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.refresh, size: 16, color: Colors.grey[600]),
+                        Icon(Icons.refresh,
+                            size: 16, color: Colors.white.withOpacity(0.7)),
                         const SizedBox(width: 4),
                         Text(
                           'Real-time',
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: Colors.white.withOpacity(0.7),
                           ),
                         ),
                       ],
@@ -735,7 +744,7 @@ class AnalyticsScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 40),
               Expanded(
                 child: Row(
                   children: [
@@ -744,16 +753,16 @@ class AnalyticsScreen extends StatelessWidget {
                       child: PieChart(
                         PieChartData(
                           sectionsSpace: 2,
-                          centerSpaceRadius: 50,
+                          centerSpaceRadius: 60,
                           sections: [
-                            _buildOrderSection(
-                                'Pending', data, total, Colors.orange),
-                            _buildOrderSection(
-                                'Shipped', data, total, Colors.blue),
-                            _buildOrderSection(
-                                'Delivered', data, total, Colors.green),
-                            _buildOrderSection(
-                                'Cancelled', data, total, Colors.red),
+                            _buildOrderSection('Pending', data, total,
+                                const Color(0xFFFFA726)),
+                            _buildOrderSection('Shipped', data, total,
+                                const Color(0xFF42A5F5)),
+                            _buildOrderSection('Delivered', data, total,
+                                const Color(0xFF66BB6A)),
+                            _buildOrderSection('Cancelled', data, total,
+                                const Color(0xFFEF5350)),
                           ],
                         ),
                       ),
@@ -765,16 +774,22 @@ class AnalyticsScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           _buildOrderLegendItem('Pending', data['pending'] ?? 0,
-                              total, Colors.orange),
-                          const SizedBox(height: 16),
+                              total, const Color(0xFFFFA726)),
+                          const SizedBox(height: 24),
                           _buildOrderLegendItem('Shipped', data['shipped'] ?? 0,
-                              total, Colors.blue),
-                          const SizedBox(height: 16),
-                          _buildOrderLegendItem('Delivered',
-                              data['delivered'] ?? 0, total, Colors.green),
-                          const SizedBox(height: 16),
-                          _buildOrderLegendItem('Cancelled',
-                              data['cancelled'] ?? 0, total, Colors.red),
+                              total, const Color(0xFF42A5F5)),
+                          const SizedBox(height: 24),
+                          _buildOrderLegendItem(
+                              'Delivered',
+                              data['delivered'] ?? 0,
+                              total,
+                              const Color(0xFF66BB6A)),
+                          const SizedBox(height: 24),
+                          _buildOrderLegendItem(
+                              'Cancelled',
+                              data['cancelled'] ?? 0,
+                              total,
+                              const Color(0xFFEF5350)),
                         ],
                       ),
                     ),
@@ -788,75 +803,51 @@ class AnalyticsScreen extends StatelessWidget {
     );
   }
 
-  PieChartSectionData _buildOrderSection(
-      String status, Map<String, int> data, int total, Color color) {
-    final value = (data[status.toLowerCase()] ?? 0).toDouble();
-    final percentage = total > 0 ? (value / total * 100) : 0;
-
-    return PieChartSectionData(
-      color: color.withOpacity(0.8),
-      value: value,
-      title: percentage >= 5 ? '${percentage.toStringAsFixed(1)}%' : '',
-      radius: 60,
-      titleStyle: GoogleFonts.poppins(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: Colors.white,
-      ),
-      badgeWidget: percentage < 5 ? null : _buildBadge(color),
-      badgePositionPercentageOffset: 1.2,
-    );
-  }
-
-  Widget _buildBadge(Color color) {
-    return Container(
-      width: 8,
-      height: 8,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 1),
-      ),
-    );
-  }
-
   Widget _buildOrderLegendItem(
       String status, int count, int total, Color color) {
     final percentage = total > 0 ? (count / total * 100) : 0;
 
-    return Row(
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.8),
-            borderRadius: BorderRadius.circular(4),
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(4),
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                status,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  status,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              Text(
-                '$count orders (${percentage.toStringAsFixed(1)}%)',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: Colors.grey[600],
+                Text(
+                  '$count orders (${percentage.toStringAsFixed(1)}%)',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.7),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -1285,6 +1276,42 @@ class AnalyticsScreen extends StatelessWidget {
           borderRadius: borderRadius ?? BorderRadius.circular(20),
         ),
       ),
+    );
+  }
+
+  PieChartSectionData _buildOrderSection(
+      String label, Map<String, int> data, int total, Color color) {
+    final count = data[label.toLowerCase()] ?? 0;
+    final percentage = total > 0 ? (count / total * 100) : 0;
+
+    return PieChartSectionData(
+      color: color.withOpacity(0.8),
+      value: count.toDouble(),
+      title: percentage >= 5 ? '${percentage.toStringAsFixed(1)}%' : '',
+      radius: 60,
+      titleStyle: GoogleFonts.poppins(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: Colors.white,
+      ),
+      badgeWidget: percentage >= 5
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                count.toString(),
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            )
+          : null,
+      badgePositionPercentageOffset: 1.2,
     );
   }
 }
