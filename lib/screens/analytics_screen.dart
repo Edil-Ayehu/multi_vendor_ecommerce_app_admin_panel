@@ -207,8 +207,8 @@ class AnalyticsScreen extends StatelessWidget {
                       child: Text(
                         title,
                         style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                           color: Theme.of(context)
                               .textTheme
                               .bodyLarge
@@ -247,9 +247,9 @@ class AnalyticsScreen extends StatelessWidget {
 
         if (!snapshot.hasData) {
           return _buildShimmerContainer(
-            height: 300,
-            baseColor: Colors.grey[300]!,
-            highlightColor: Colors.grey[100]!,
+            height: 400,
+            baseColor: const Color(0xff203857).withOpacity(0.5),
+            highlightColor: const Color(0xff203857).withOpacity(0.3),
           );
         }
 
@@ -258,75 +258,123 @@ class AnalyticsScreen extends StatelessWidget {
           return const Center(child: Text('No revenue data available'));
         }
 
-        // Sort data by date
-        data.sort((a, b) => a['date'].compareTo(b['date']));
+        // Format revenue values using NumberFormat
+        final numberFormat = NumberFormat('#,##0.00');
 
-        // Create spots for the line chart
+        data.sort((a, b) => a['date'].compareTo(b['date']));
         final spots = data.asMap().entries.map((entry) {
+          final amount = entry.value['amount'] as double;
           return FlSpot(
             entry.key.toDouble(),
-            entry.value['amount'].toDouble(),
+            amount,
           );
         }).toList();
 
-        // Find min and max values for better scaling
-        final maxY = data.fold<double>(
-            0, (max, item) => math.max(max, item['amount'].toDouble()));
+        final maxY = math.max(
+          data.fold<double>(
+              0, (max, item) => math.max(max, item['amount'] as double)),
+          1.0,
+        );
 
         return Container(
-          height: 300,
-          padding: const EdgeInsets.all(20),
+          height: 400,
+          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                const Color(0xFF2C3E50),
+                const Color(0xFF3498DB),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Revenue Trend',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Revenue Trend',
+                        style: GoogleFonts.poppins(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        'Last ${data.length} months',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'Total: \$${numberFormat.format(data.fold<double>(0, (sum, item) => sum + (item['amount'] as double)))}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Last ${data.length} months',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 30),
               Expanded(
                 child: LineChart(
                   LineChartData(
                     gridData: FlGridData(
                       show: true,
                       drawVerticalLine: false,
-                      horizontalInterval: maxY > 0 ? maxY / 5 : 1,
+                      horizontalInterval: math.max(maxY / 5, 1.0),
                       getDrawingHorizontalLine: (value) {
                         return FlLine(
-                          color: Colors.grey.withOpacity(0.1),
+                          color: Colors.white.withOpacity(0.1),
                           strokeWidth: 1,
                         );
                       },
                     ),
                     titlesData: FlTitlesData(
                       show: true,
-                      rightTitles: AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                      topTitles: AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
+                      rightTitles:
+                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles:
+                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) {
+                            return Text(
+                              '\$${numberFormat.format(value)}',
+                              style: GoogleFonts.poppins(
+                                color: Colors.white.withOpacity(0.7),
+                                fontSize: 12,
+                              ),
+                            );
+                          },
+                        ),
                       ),
                       bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
@@ -339,10 +387,9 @@ class AnalyticsScreen extends StatelessWidget {
                               return Padding(
                                 padding: const EdgeInsets.only(top: 8.0),
                                 child: Text(
-                                  date.substring(
-                                      5), // Show only month part (MM)
-                                  style: const TextStyle(
-                                    color: Colors.grey,
+                                  date.substring(5),
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white.withOpacity(0.7),
                                     fontSize: 12,
                                   ),
                                 ),
@@ -352,32 +399,13 @@ class AnalyticsScreen extends StatelessWidget {
                           },
                         ),
                       ),
-                      leftTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          interval: maxY > 0 ? maxY / 5 : 1,
-                          getTitlesWidget: (value, meta) {
-                            return Text(
-                              '\$${value.toStringAsFixed(0)}',
-                              style: const TextStyle(
-                                color: Colors.grey,
-                                fontSize: 12,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
                     ),
                     borderData: FlBorderData(show: false),
-                    minX: 0,
-                    maxX: (data.length - 1).toDouble(),
-                    minY: 0,
-                    maxY: maxY * 1.1, // Add 10% padding at the top
                     lineBarsData: [
                       LineChartBarData(
                         spots: spots,
                         isCurved: true,
-                        color: Colors.purple,
+                        color: Colors.white,
                         barWidth: 3,
                         isStrokeCapRound: true,
                         dotData: FlDotData(
@@ -385,30 +413,29 @@ class AnalyticsScreen extends StatelessWidget {
                           getDotPainter: (spot, percent, barData, index) {
                             return FlDotCirclePainter(
                               radius: 4,
-                              color: Colors.purple,
+                              color: Colors.white,
                               strokeWidth: 2,
-                              strokeColor: Colors.white,
+                              strokeColor: const Color(0xFF2C3E50),
                             );
                           },
                         ),
                         belowBarData: BarAreaData(
                           show: true,
-                          color: Colors.purple.withOpacity(0.1),
+                          color: Colors.white.withOpacity(0.1),
                         ),
                       ),
                     ],
                     lineTouchData: LineTouchData(
                       touchTooltipData: LineTouchTooltipData(
-                        // tooltipBackground: Colors.blueAccent,
-
-                        getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
-                          return touchedBarSpots.map((barSpot) {
-                            final index = barSpot.x.toInt();
-                            final date = data[index]['date'] as String;
-                            final amount = data[index]['amount'].toDouble();
+                        getTooltipItems: (touchedSpots) {
+                          return touchedSpots.map((spot) {
+                            final data = snapshot.data![spot.x.toInt()];
                             return LineTooltipItem(
-                              '$date\n\$${amount.toStringAsFixed(2)}',
-                              const TextStyle(color: Colors.white),
+                              'Revenue: \$${numberFormat.format(data['amount'])}',
+                              GoogleFonts.poppins(
+                                color: const Color(0xFF2C3E50),
+                                fontWeight: FontWeight.w600,
+                              ),
                             );
                           }).toList();
                         },
@@ -1126,126 +1153,182 @@ class AnalyticsScreen extends StatelessWidget {
         final sortedData = data.entries.toList()
           ..sort((a, b) => b.value.compareTo(a.value));
 
-        return Container(
-          height: 400,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xff203857),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                spreadRadius: 2,
-                blurRadius: 5,
+        // Calculate total products
+        final totalProducts =
+            data.values.fold<int>(0, (sum, value) => sum + value);
+
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isSmallScreen = constraints.maxWidth < 600;
+
+            return Container(
+              height: 400,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xff203857),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 2,
+                    blurRadius: 5,
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Product Categories Distribution',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Expanded(
-                child: BarChart(
-                  BarChartData(
-                    alignment: BarChartAlignment.spaceAround,
-                    maxY: sortedData.first.value.toDouble() * 1.2,
-                    titlesData: FlTitlesData(
-                      show: true,
-                      leftTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 40,
-                          getTitlesWidget: (value, meta) {
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: Text(
-                                value.toInt().toString(),
-                                style: GoogleFonts.poppins(
-                                    fontSize: 12, color: Colors.white),
-                                textAlign: TextAlign.right,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 100,
-                          getTitlesWidget: (value, meta) {
-                            if (value.toInt() >= sortedData.length) {
-                              return const Text('');
-                            }
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Transform.rotate(
-                                angle: -0.5,
-                                child: SizedBox(
-                                  width: 80,
-                                  child: Text(
-                                    sortedData[value.toInt()].key,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    textAlign: TextAlign.right,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      rightTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                      topTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                    ),
-                    gridData: FlGridData(
-                      show: true,
-                      drawVerticalLine: false,
-                      horizontalInterval: 1,
-                      getDrawingHorizontalLine: (value) {
-                        return FlLine(
-                          color: Colors.white.withOpacity(0.1),
-                          strokeWidth: 1,
-                        );
-                      },
-                    ),
-                    borderData: FlBorderData(show: false),
-                    barGroups: sortedData.asMap().entries.map((entry) {
-                      return BarChartGroupData(
-                        x: entry.key,
-                        barRods: [
-                          BarChartRodData(
-                            toY: entry.value.value.toDouble(),
-                            color: Theme.of(context).colorScheme.primary,
-                            width: 16,
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Product Categories Distribution',
+                            style: GoogleFonts.poppins(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            'Total Products: $totalProducts',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              color: Colors.white.withOpacity(0.7),
                             ),
                           ),
                         ],
-                      );
-                    }).toList(),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.refresh,
+                              size: 16,
+                              color: Colors.white.withOpacity(0.7),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Real-time',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: Colors.white.withOpacity(0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ),
+                  const SizedBox(height: 24),
+                  Expanded(
+                    child: BarChart(
+                      BarChartData(
+                        alignment: BarChartAlignment.spaceAround,
+                        maxY: sortedData.first.value.toDouble() * 1.2,
+                        titlesData: FlTitlesData(
+                          show: true,
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 40,
+                              getTitlesWidget: (value, meta) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: Text(
+                                    value.toInt().toString(),
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      color: Colors.white,
+                                    ),
+                                    textAlign: TextAlign.right,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 100,
+                              getTitlesWidget: (value, meta) {
+                                if (value.toInt() >= sortedData.length) {
+                                  return const Text('');
+                                }
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Transform.rotate(
+                                    angle: -0.5,
+                                    child: SizedBox(
+                                      width: 80,
+                                      child: Text(
+                                        sortedData[value.toInt()].key,
+                                        style: GoogleFonts.poppins(
+                                          fontSize: isSmallScreen ? 10 : 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.white,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.right,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          rightTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          topTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                        ),
+                        gridData: FlGridData(
+                          show: true,
+                          drawVerticalLine: false,
+                          horizontalInterval: 1,
+                          getDrawingHorizontalLine: (value) {
+                            return FlLine(
+                              color: Colors.white.withOpacity(0.1),
+                              strokeWidth: 1,
+                            );
+                          },
+                        ),
+                        borderData: FlBorderData(show: false),
+                        barGroups: sortedData.asMap().entries.map((entry) {
+                          return BarChartGroupData(
+                            x: entry.key,
+                            barRods: [
+                              BarChartRodData(
+                                toY: entry.value.value.toDouble(),
+                                color: Theme.of(context).colorScheme.primary,
+                                width: 16,
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(4),
+                                ),
+                              ),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );

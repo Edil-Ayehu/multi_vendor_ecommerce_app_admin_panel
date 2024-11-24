@@ -212,25 +212,49 @@ class AdminService {
     try {
       final QuerySnapshot ordersSnapshot = await _firestore
           .collection('orders')
-          .orderBy('createdAt', descending: false)
+          .orderBy('createdAt', descending: true)
           .get();
 
       Map<String, double> monthlyRevenue = {};
+      DateTime now = DateTime.now();
 
-      for (var doc in ordersSnapshot.docs) {
-        final data = doc.data() as Map<String, dynamic>;
-        final DateTime date = (data['createdAt'] as Timestamp).toDate();
-        final String monthKey =
-            '${date.year}-${date.month.toString().padLeft(2, '0')}';
-        final double amount = (data['totalAmount'] as num?)?.toDouble() ?? 0.0;
-
-        monthlyRevenue[monthKey] = (monthlyRevenue[monthKey] ?? 0) + amount;
+      // Initialize last 6 months with 0
+      for (int i = 5; i >= 0; i--) {
+        DateTime month = DateTime(now.year, now.month - i, 1);
+        String monthKey =
+            '${month.year}-${month.month.toString().padLeft(2, '0')}';
+        monthlyRevenue[monthKey] = 0.0;
       }
 
+      // Calculate revenue from orders
+      for (var doc in ordersSnapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        if (data['createdAt'] != null && data['totalAmount'] != null) {
+          final DateTime date = (data['createdAt'] as Timestamp).toDate();
+          final String monthKey =
+              '${date.year}-${date.month.toString().padLeft(2, '0')}';
+
+          // Only process orders from the last 6 months
+          if (monthlyRevenue.containsKey(monthKey)) {
+            double orderAmount = 0.0;
+            if (data['totalAmount'] is int) {
+              orderAmount = (data['totalAmount'] as int).toDouble();
+            } else if (data['totalAmount'] is double) {
+              orderAmount = data['totalAmount'] as double;
+            } else if (data['totalAmount'] is String) {
+              orderAmount = double.tryParse(data['totalAmount']) ?? 0.0;
+            }
+            monthlyRevenue[monthKey] =
+                (monthlyRevenue[monthKey] ?? 0.0) + orderAmount;
+          }
+        }
+      }
+
+      // Convert to list format
       return monthlyRevenue.entries
-          .map((e) => {
-                'date': e.key,
-                'amount': e.value,
+          .map((entry) => {
+                'date': entry.key,
+                'amount': entry.value,
               })
           .toList();
     } catch (e) {
@@ -248,11 +272,12 @@ class AdminService {
 
       Map<String, Map<String, int>> monthlyUsers = {};
       DateTime now = DateTime.now();
-      
+
       // Initialize last 6 months data
       for (int i = 5; i >= 0; i--) {
         DateTime month = DateTime(now.year, now.month - i, 1);
-        String monthKey = '${month.year}-${month.month.toString().padLeft(2, '0')}';
+        String monthKey =
+            '${month.year}-${month.month.toString().padLeft(2, '0')}';
         monthlyUsers[monthKey] = {
           'customers': 0,
           'vendors': 0,
@@ -264,14 +289,17 @@ class AdminService {
         final data = doc.data() as Map<String, dynamic>;
         if (data['createdAt'] != null) {
           final DateTime date = (data['createdAt'] as Timestamp).toDate();
-          final String monthKey = '${date.year}-${date.month.toString().padLeft(2, '0')}';
+          final String monthKey =
+              '${date.year}-${date.month.toString().padLeft(2, '0')}';
           final String role = (data['role'] as String?) ?? 'customer';
-          
+
           if (monthlyUsers.containsKey(monthKey)) {
             if (role == 'vendor') {
-              monthlyUsers[monthKey]!['vendors'] = (monthlyUsers[monthKey]!['vendors'] ?? 0) + 1;
+              monthlyUsers[monthKey]!['vendors'] =
+                  (monthlyUsers[monthKey]!['vendors'] ?? 0) + 1;
             } else {
-              monthlyUsers[monthKey]!['customers'] = (monthlyUsers[monthKey]!['customers'] ?? 0) + 1;
+              monthlyUsers[monthKey]!['customers'] =
+                  (monthlyUsers[monthKey]!['customers'] ?? 0) + 1;
             }
           }
         }
@@ -328,16 +356,18 @@ class AdminService {
 
   Future<Map<String, int>> getAdvertisementDistribution() async {
     try {
-      final QuerySnapshot adsSnapshot = await _firestore.collection('advertisements').get();
-      
+      final QuerySnapshot adsSnapshot =
+          await _firestore.collection('advertisements').get();
+
       int activeAds = 0;
       int expiredAds = 0;
 
       for (var doc in adsSnapshot.docs) {
         final adData = doc.data() as Map<String, dynamic>;
         final expiryDate = (adData['expiryDate'] as Timestamp).toDate();
-        
-        if (!expiryDate.isBefore(DateTime.now()) && adData['isActive'] == true) {
+
+        if (!expiryDate.isBefore(DateTime.now()) &&
+            adData['isActive'] == true) {
           activeAds++;
         } else {
           expiredAds++;
@@ -361,8 +391,9 @@ class AdminService {
 
   Future<Map<String, int>> getProductCategoryDistribution() async {
     try {
-      final QuerySnapshot productsSnapshot = await _firestore.collection('products').get();
-      
+      final QuerySnapshot productsSnapshot =
+          await _firestore.collection('products').get();
+
       Map<String, int> categoryCount = {
         'Electronics': 0,
         'Fashion': 0,
