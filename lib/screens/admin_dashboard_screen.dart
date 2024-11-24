@@ -11,6 +11,8 @@ import 'package:multi_vendor_ecommerce_app_admin_panel/widgets/admin_drawer.dart
 import 'dart:ui' show Color;
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:multi_vendor_ecommerce_app_admin_panel/services/theme_service.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   final AdminService _adminService = AdminService();
@@ -19,9 +21,12 @@ class AdminDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: _buildAppBar(context),
-      backgroundColor: Colors.grey[100],
+      backgroundColor:
+          isDarkMode ? const Color.fromARGB(255, 3, 3, 21) : Colors.grey[100],
       drawer: const AdminDrawer(),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _adminService.getPlatformAnalytics(),
@@ -54,10 +59,14 @@ class AdminDashboardScreen extends StatelessWidget {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final themeService = Provider.of<ThemeService>(context);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return AppBar(
       elevation: 0,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      foregroundColor: Colors.black,
+      backgroundColor:
+          isDarkMode ? const Color.fromARGB(255, 3, 3, 21) : Colors.grey[100],
+      foregroundColor: isDarkMode ? Colors.white : Colors.black,
       title: Text(
         'Dashboard',
         style: GoogleFonts.poppins(
@@ -67,9 +76,25 @@ class AdminDashboardScreen extends StatelessWidget {
       ),
       actions: [
         IconButton(
-          icon: const Icon(LineIcons.bell),
-          onPressed: () {},
-          color: Theme.of(context).textTheme.titleLarge?.color,
+          icon: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return RotationTransition(
+                turns: animation,
+                child: FadeTransition(
+                  opacity: animation,
+                  child: child,
+                ),
+              );
+            },
+            child: Icon(
+              isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+              key: ValueKey<bool>(isDarkMode),
+              color: Theme.of(context).textTheme.titleLarge?.color,
+            ),
+          ),
+          onPressed: () => themeService.toggleTheme(),
+          tooltip: isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode',
         ),
         const SizedBox(width: 8),
       ],
@@ -77,6 +102,7 @@ class AdminDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildStatisticsGrid(BuildContext context, Map<String, dynamic> data) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return LayoutBuilder(
       builder: (context, constraints) {
         final crossAxisCount = constraints.maxWidth > 1200
@@ -98,42 +124,54 @@ class AdminDashboardScreen extends StatelessWidget {
               'Customers',
               data['totalCustomers'].toString(),
               LineIcons.users,
-              const Color(0xffC6E7FF),
+              isDarkMode
+                  ? const Color.fromARGB(255, 11, 11, 53)
+                  : const Color(0xffC6E7FF),
             ),
             _buildStatCard(
               context,
               'Vendors',
               data['totalVendors'].toString(),
               LineIcons.store,
-              const Color(0xffD4F6FF),
+              isDarkMode
+                  ? const Color.fromARGB(255, 11, 11, 53)
+                  : const Color(0xffD4F6FF),
             ),
             _buildStatCard(
               context,
               'Products',
               data['totalProducts'].toString(),
               LineIcons.shoppingBag,
-              const Color(0xffFBFBFB),
+              isDarkMode
+                  ? const Color.fromARGB(255, 11, 11, 53)
+                  : const Color(0xffFBFBFB),
             ),
             _buildStatCard(
               context,
               'Orders',
               data['totalOrders'].toString(),
               LineIcons.shoppingCart,
-              const Color(0xffFFDDAE),
+              isDarkMode
+                  ? const Color.fromARGB(255, 11, 11, 53)
+                  : const Color(0xffFFDDAE),
             ),
             _buildStatCard(
               context,
               'Active Ads',
               data['activeAds'].toString(),
               LineIcons.ad,
-              const Color.fromARGB(255, 190, 159, 236),
+              isDarkMode
+                  ? const Color.fromARGB(255, 11, 11, 53)
+                  : const Color.fromARGB(255, 190, 159, 236),
             ),
             _buildStatCard(
               context,
               'Revenue',
               '\$${data['totalRevenue'].toString()}',
               LineIcons.moneyBill,
-              const Color(0xffFAFFAF),
+              isDarkMode
+                  ? const Color.fromARGB(255, 11, 11, 53)
+                  : const Color(0xffFAFFAF),
             ),
           ],
         );
@@ -181,18 +219,12 @@ class AdminDashboardScreen extends StatelessWidget {
     IconData icon,
     Color color,
   ) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         color: color,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey[200]!,
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -212,13 +244,13 @@ class AdminDashboardScreen extends StatelessWidget {
             style: GoogleFonts.poppins(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: Colors.black,
+              color: isDarkMode ? Colors.white : Colors.black,
             ),
           ),
           Text(
             title,
             style: GoogleFonts.poppins(
-              color: Colors.black,
+              color: isDarkMode ? Colors.white : Colors.black,
               fontSize: 14,
             ),
           ),
@@ -228,8 +260,11 @@ class AdminDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildRecentOrders(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Card(
       elevation: 2,
+      color:
+          isDarkMode ? const Color.fromARGB(255, 11, 11, 53) : Colors.grey[100],
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -250,13 +285,22 @@ class AdminDashboardScreen extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     side: BorderSide(
-                      color: Theme.of(context).primaryColor,
+                      color: isDarkMode
+                          ? const Color.fromARGB(255, 211, 211, 241)
+                          : Theme.of(context).primaryColor,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text('View All'),
+                  child: Text(
+                    'View All',
+                    style: TextStyle(
+                      color: isDarkMode
+                          ? const Color.fromARGB(255, 255, 255, 255)
+                          : Theme.of(context).primaryColor,
+                    ),
+                  ),
                   onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -318,7 +362,7 @@ class AdminDashboardScreen extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.w600,
                           fontSize: 20,
-                          color: Theme.of(context).primaryColor,
+                          color: isDarkMode ? Colors.white : Colors.black,
                         ),
                       ),
                     );
@@ -390,8 +434,11 @@ class AdminDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildRecentUsers(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Card(
       elevation: 2,
+      color:
+          isDarkMode ? const Color.fromARGB(255, 11, 11, 53) : Colors.grey[100],
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -410,16 +457,23 @@ class AdminDashboardScreen extends StatelessWidget {
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
+                    backgroundColor: isDarkMode
+                        ? const Color.fromARGB(255, 211, 211, 241)
+                        : Theme.of(context).primaryColor,
                     side: BorderSide(
-                      color: Theme.of(context).primaryColor,
+                      color: isDarkMode
+                          ? const Color.fromARGB(255, 7, 7, 48)
+                          : Theme.of(context).primaryColor,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text('View All',
-                      style: TextStyle(color: Colors.white)),
+                  child: Text(
+                    'View All',
+                    style: TextStyle(
+                        color: isDarkMode ? Colors.black : Colors.white),
+                  ),
                   onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -557,8 +611,11 @@ class AdminDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildRecentAds(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Card(
       elevation: 2,
+      color:
+          isDarkMode ? const Color.fromARGB(255, 11, 11, 53) : Colors.grey[100],
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -619,6 +676,9 @@ class AdminDashboardScreen extends StatelessWidget {
                       width: 280,
                       child: Card(
                         elevation: 0,
+                        color: isDarkMode
+                            ? const Color.fromARGB(255, 11, 11, 53)
+                            : Colors.grey[100],
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                           side: BorderSide(
