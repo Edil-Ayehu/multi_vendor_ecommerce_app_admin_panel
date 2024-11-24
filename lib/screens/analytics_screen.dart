@@ -437,7 +437,6 @@ class AnalyticsScreen extends StatelessWidget {
           return const Center(child: Text('No user growth data available'));
         }
 
-        // Find max value for better scaling
         double maxY = 0;
         for (var item in data) {
           maxY = math.max(maxY, (item['customers'] as int).toDouble());
@@ -448,11 +447,11 @@ class AnalyticsScreen extends StatelessWidget {
           height: 350,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: const Color(0xff203857),
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withOpacity(0.2),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -461,38 +460,47 @@ class AnalyticsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'User Growth',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'User Growth',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                      Text(
-                        'Last ${data.length} months',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: Colors.grey[600],
+                        Text(
+                          'Last ${data.length} months',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: Colors.white70,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      _buildUserGrowthLegendItem(
-                          'Customers', const Color(0xFF6366F1)),
-                      const SizedBox(width: 16),
-                      _buildUserGrowthLegendItem(
-                          'Vendors', const Color(0xFF10B981)),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        _buildUserGrowthLegendItem(
+                            'Customers', const Color(0xFF6366F1)),
+                        const SizedBox(width: 16),
+                        _buildUserGrowthLegendItem(
+                            'Vendors', const Color(0xFF10B981)),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 20),
               Expanded(
@@ -503,7 +511,7 @@ class AnalyticsScreen extends StatelessWidget {
                     barTouchData: BarTouchData(
                       enabled: true,
                       touchTooltipData: BarTouchTooltipData(
-                        // tooltipBgColor: Colors.blueGrey.withOpacity(0.9),
+                        // tooltipBgColor: Colors.white.withOpacity(0.9),
                         tooltipRoundedRadius: 8,
                         tooltipMargin: 8,
                         getTooltipItem: (group, groupIndex, rod, rodIndex) {
@@ -515,19 +523,29 @@ class AnalyticsScreen extends StatelessWidget {
                           return BarTooltipItem(
                             '$type\n$value',
                             GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w600,
                             ),
                           );
                         },
                       ),
                     ),
                     titlesData: FlTitlesData(
-                      show: true,
-                      rightTitles:
-                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      topTitles:
-                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) {
+                            return Text(
+                              value.toInt().toString(),
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                       bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
@@ -541,8 +559,9 @@ class AnalyticsScreen extends StatelessWidget {
                                 child: Text(
                                   date.substring(5),
                                   style: GoogleFonts.poppins(
-                                    color: Colors.grey[600],
+                                    color: Colors.white,
                                     fontSize: 12,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
                               );
@@ -551,21 +570,10 @@ class AnalyticsScreen extends StatelessWidget {
                           },
                         ),
                       ),
-                      leftTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 30,
-                          getTitlesWidget: (value, meta) {
-                            return Text(
-                              value.toInt().toString(),
-                              style: GoogleFonts.poppins(
-                                color: Colors.grey[600],
-                                fontSize: 12,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
+                      rightTitles:
+                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles:
+                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     ),
                     gridData: FlGridData(
                       show: true,
@@ -573,7 +581,7 @@ class AnalyticsScreen extends StatelessWidget {
                       horizontalInterval: maxY > 5 ? maxY / 5 : 1,
                       getDrawingHorizontalLine: (value) {
                         return FlLine(
-                          color: Colors.grey.withOpacity(0.1),
+                          color: Colors.white.withOpacity(0.2),
                           strokeWidth: 1,
                         );
                       },
@@ -627,7 +635,7 @@ class AnalyticsScreen extends StatelessWidget {
           label,
           style: GoogleFonts.poppins(
             fontSize: 12,
-            color: Colors.grey[600],
+            color: Colors.white,
           ),
         ),
       ],
