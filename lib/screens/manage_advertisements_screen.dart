@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:multi_vendor_ecommerce_app_admin_panel/services/admin_service.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ManageAdvertisementsScreen extends StatefulWidget {
   const ManageAdvertisementsScreen({super.key});
@@ -125,10 +126,28 @@ class _ManageAdvertisementsScreenState extends State<ManageAdvertisementsScreen>
           }
 
           if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return TabBarView(
+              controller: _tabController,
+              children: [
+                _buildShimmerAdsList(),
+                _buildShimmerAdsList(),
+              ],
+            );
           }
 
           final allAds = snapshot.data!.docs;
+          
+          // If there are no ads at all, show shimmer while loading
+          if (allAds.isEmpty) {
+            return TabBarView(
+              controller: _tabController,
+              children: [
+                _buildShimmerAdsList(),
+                _buildShimmerAdsList(),
+              ],
+            );
+          }
+
           final activeAds = allAds.where((ad) {
             final adData = ad.data() as Map<String, dynamic>;
             final expiryDate = (adData['expiryDate'] as Timestamp).toDate();
@@ -163,32 +182,8 @@ class _ManageAdvertisementsScreenState extends State<ManageAdvertisementsScreen>
 
   Widget _buildAdsList(List<DocumentSnapshot> ads, {required bool isExpired}) {
     if (ads.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              LineIcons.ad,
-              size: 64,
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              isExpired
-                  ? 'No expired advertisements'
-                  : 'No active advertisements',
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                color: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.color
-                    ?.withOpacity(0.7),
-              ),
-            ),
-          ],
-        ),
-      );
+      // Show shimmer loading instead of "No advertisements" message
+      return _buildShimmerAdsList();
     }
 
     final screenWidth = MediaQuery.of(context).size.width;
@@ -600,6 +595,104 @@ class _ManageAdvertisementsScreenState extends State<ManageAdvertisementsScreen>
                           ),
                         ),
                       ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShimmerAdsList() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: GridView.builder(
+        padding: const EdgeInsets.all(12),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: MediaQuery.of(context).size.width > 1200
+              ? 5
+              : MediaQuery.of(context).size.width > 900
+                  ? 4
+                  : MediaQuery.of(context).size.width > 600
+                      ? 3
+                      : 2,
+          childAspectRatio: 0.7,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+        ),
+        itemCount: 10, // Show 10 shimmer items while loading
+        itemBuilder: (context, index) => Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: BorderSide(
+              color: Theme.of(context).dividerColor.withOpacity(0.1),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Shimmer image placeholder
+              Container(
+                height: 120,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title placeholder
+                      Container(
+                        width: double.infinity,
+                        height: 16,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(height: 8),
+                      // Description placeholder
+                      Container(
+                        width: double.infinity,
+                        height: 12,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        width: double.infinity,
+                        height: 12,
+                        color: Colors.white,
+                      ),
+                      const Spacer(),
+                      // Date placeholder
+                      Container(
+                        width: 80,
+                        height: 12,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(height: 8),
+                      // Controls placeholder
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 16,
+                            color: Colors.white,
+                          ),
+                          Container(
+                            width: 16,
+                            height: 16,
+                            color: Colors.white,
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
