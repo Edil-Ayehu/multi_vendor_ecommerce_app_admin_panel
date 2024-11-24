@@ -253,13 +253,13 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                   ? 3
                   : 5,
               child: GridView.builder(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(isSmallScreen ? 8 : 16),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: _calculateCrossAxisCount(
                       MediaQuery.of(context).size.width),
-                  childAspectRatio: isVendorTab ? 1.1 : 1,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
+                  childAspectRatio: isSmallScreen ? 0.8 : 1.1,
+                  crossAxisSpacing: isSmallScreen ? 8 : 16,
+                  mainAxisSpacing: isSmallScreen ? 8 : 16,
                 ),
                 itemCount: users.length,
                 itemBuilder: (context, index) {
@@ -304,25 +304,17 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
   }
 
   int _calculateCrossAxisCount(double width) {
-    final bool isDetailsOpen = selectedUserId != null;
-
-    // Reduce the width thresholds when details panel is open
-    if (isDetailsOpen) {
-      if (width > 1500) return 3;
-      if (width > 1200) return 2;
-      return 1;
-    }
-
-    // Original thresholds when details panel is closed
-    if (width > 1200) return 4;
-    if (width > 900) return 3;
-    if (width > 600) return 2;
-    return 1;
+    if (width <= 600) return 2;
+    if (width <= 900) return 3;
+    if (width <= 1200) return 4;
+    return 5;
   }
 
   Widget _buildCustomerCard(
       BuildContext context, Map<String, dynamic> userData, String userId) {
     final bool isBlocked = userData['isBlocked'] ?? false;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth <= 600;
 
     return Card(
       elevation: 0,
@@ -351,7 +343,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
           onTap: () => setState(() => selectedUserId = userId),
           borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(isSmallScreen ? 8.0 : 16.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -359,7 +351,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                   alignment: Alignment.center,
                   children: [
                     CircleAvatar(
-                      radius: 40,
+                      radius: isSmallScreen ? 30 : 40,
                       backgroundImage: NetworkImage(
                         userData['profileImage'] ??
                             'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y',
@@ -369,40 +361,40 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                       bottom: 0,
                       right: 0,
                       child: Container(
-                        padding: const EdgeInsets.all(4),
+                        padding: EdgeInsets.all(isSmallScreen ? 2 : 4),
                         decoration: BoxDecoration(
                           color: isBlocked ? Colors.red : Colors.green,
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: Theme.of(context).scaffoldBackgroundColor,
-                            width: 2,
+                            width: isSmallScreen ? 1.5 : 2,
                           ),
                         ),
                         child: Icon(
                           isBlocked ? Icons.block : Icons.check,
-                          size: 12,
+                          size: isSmallScreen ? 8 : 12,
                           color: Colors.white,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: isSmallScreen ? 8 : 16),
                 Text(
                   userData['fullName'] ?? 'N/A',
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w600,
-                    fontSize: 16,
+                    fontSize: isSmallScreen ? 13 : 16,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: isSmallScreen ? 2 : 4),
                 Text(
                   userData['email'] ?? 'N/A',
                   style: GoogleFonts.poppins(
-                    fontSize: 14,
+                    fontSize: isSmallScreen ? 11 : 14,
                     color: Theme.of(context)
                         .textTheme
                         .bodyMedium
@@ -413,10 +405,12 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: isSmallScreen ? 4 : 8),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isSmallScreen ? 8 : 12,
+                    vertical: isSmallScreen ? 2 : 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.blue.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -424,7 +418,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                   child: Text(
                     'Customer',
                     style: GoogleFonts.poppins(
-                      fontSize: 12,
+                      fontSize: isSmallScreen ? 10 : 12,
                       color: Colors.blue,
                       fontWeight: FontWeight.w500,
                     ),
@@ -441,6 +435,8 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
   Widget _buildVendorCard(
       BuildContext context, Map<String, dynamic> userData, String userId) {
     final bool isBlocked = userData['isBlocked'] ?? false;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth <= 600;
 
     return Card(
       elevation: 0,
@@ -464,7 +460,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(isSmallScreen ? 8.0 : 16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -472,7 +468,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                 alignment: Alignment.center,
                 children: [
                   CircleAvatar(
-                    radius: 40,
+                    radius: isSmallScreen ? 30 : 40,
                     backgroundImage: NetworkImage(
                       userData['profileImage'] ??
                           'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y',
@@ -482,40 +478,40 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                     bottom: 0,
                     right: 0,
                     child: Container(
-                      padding: const EdgeInsets.all(4),
+                      padding: EdgeInsets.all(isSmallScreen ? 2 : 4),
                       decoration: BoxDecoration(
                         color: isBlocked ? Colors.red : Colors.green,
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: Theme.of(context).scaffoldBackgroundColor,
-                          width: 2,
+                          width: isSmallScreen ? 1.5 : 2,
                         ),
                       ),
                       child: Icon(
                         isBlocked ? Icons.block : Icons.check,
-                        size: 12,
+                        size: isSmallScreen ? 8 : 12,
                         color: Colors.white,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: isSmallScreen ? 8 : 16),
               Text(
                 userData['fullName'] ?? 'N/A',
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.w600,
-                  fontSize: 16,
+                  fontSize: isSmallScreen ? 13 : 16,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: isSmallScreen ? 2 : 4),
               Text(
                 userData['email'] ?? 'N/A',
                 style: GoogleFonts.poppins(
-                  fontSize: 14,
+                  fontSize: isSmallScreen ? 11 : 14,
                   color: Theme.of(context)
                       .textTheme
                       .bodyMedium
@@ -526,10 +522,12 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: isSmallScreen ? 4 : 8),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallScreen ? 8 : 12,
+                  vertical: isSmallScreen ? 2 : 4,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.purple.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -537,18 +535,21 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                 child: Text(
                   'Vendor',
                   style: GoogleFonts.poppins(
-                    fontSize: 12,
+                    fontSize: isSmallScreen ? 10 : 12,
                     color: Colors.purple,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
-              Switch.adaptive(
-                value: !isBlocked,
-                activeColor: Theme.of(context).colorScheme.primary,
-                onChanged: (value) =>
-                    _adminService.toggleUserStatus(userId, !value),
+              SizedBox(height: isSmallScreen ? 4 : 8),
+              Transform.scale(
+                scale: isSmallScreen ? 0.8 : 1.0,
+                child: Switch.adaptive(
+                  value: !isBlocked,
+                  activeColor: Theme.of(context).colorScheme.primary,
+                  onChanged: (value) =>
+                      _adminService.toggleUserStatus(userId, !value),
+                ),
               ),
             ],
           ),
