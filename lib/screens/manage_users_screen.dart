@@ -24,15 +24,21 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
-        setState(() {});
+        setState(() {
+          selectedUserId = null;
+        });
       }
     });
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
+  Future<bool> _onWillPop() async {
+    if (selectedUserId != null) {
+      setState(() {
+        selectedUserId = null;
+      });
+      return false;
+    }
+    return true;
   }
 
   @override
@@ -40,74 +46,62 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
 
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          leading: IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(LineIcons.arrowLeft, color: Colors.black),
-          ),
-          title: Text(
-            'Manage Users',
-            style: GoogleFonts.poppins(
-              color: Theme.of(context).textTheme.titleLarge?.color,
-              fontWeight: FontWeight.w600,
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          appBar: AppBar(
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            leading: IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(LineIcons.arrowLeft, color: Colors.black),
             ),
-          ),
-          bottom: TabBar(
-            controller: _tabController,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            indicatorSize: TabBarIndicatorSize.tab,
-            indicatorWeight: 2,
-            indicatorColor: Colors.transparent,
-            dividerColor: Colors.transparent,
-            labelColor: Theme.of(context).colorScheme.primary,
-            unselectedLabelColor:
-                Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.7),
-            tabs: [
-              Tab(
-                height: 52,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  constraints:
-                      BoxConstraints(minWidth: isSmallScreen ? 160 : 260),
-                  decoration: BoxDecoration(
-                    color: _tabController.index == 0
-                        ? Colors.blue.withOpacity(0.1)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
+            title: Text(
+              'Manage Users',
+              style: GoogleFonts.poppins(
+                color: Theme.of(context).textTheme.titleLarge?.color,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            bottom: TabBar(
+              controller: _tabController,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              indicatorSize: TabBarIndicatorSize.tab,
+              indicatorWeight: 2,
+              indicatorColor: Colors.transparent,
+              dividerColor: Colors.transparent,
+              labelColor: Theme.of(context).colorScheme.primary,
+              unselectedLabelColor:
+                  Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.7),
+              tabs: [
+                Tab(
+                  height: 52,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    constraints:
+                        BoxConstraints(minWidth: isSmallScreen ? 160 : 260),
+                    decoration: BoxDecoration(
                       color: _tabController.index == 0
-                          ? Colors.blue
+                          ? Colors.blue.withOpacity(0.1)
                           : Colors.transparent,
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.person_rounded,
-                        size: 20,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
                         color: _tabController.index == 0
                             ? Colors.blue
-                            : Theme.of(context)
-                                .textTheme
-                                .bodyLarge
-                                ?.color
-                                ?.withOpacity(0.7),
+                            : Colors.transparent,
+                        width: 1,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Customers',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.person_rounded,
+                          size: 20,
                           color: _tabController.index == 0
                               ? Colors.blue
                               : Theme.of(context)
@@ -116,51 +110,51 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                                   ?.color
                                   ?.withOpacity(0.7),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Tab(
-                height: 52,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  constraints:
-                      BoxConstraints(minWidth: isSmallScreen ? 160 : 260),
-                  decoration: BoxDecoration(
-                    color: _tabController.index == 1
-                        ? Colors.purple.withOpacity(0.1)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _tabController.index == 1
-                          ? Colors.purple
-                          : Colors.transparent,
-                      width: 1,
+                        const SizedBox(width: 8),
+                        Text(
+                          'Customers',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: _tabController.index == 0
+                                ? Colors.blue
+                                : Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.color
+                                    ?.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.store_rounded,
-                        size: 20,
+                ),
+                Tab(
+                  height: 52,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    constraints:
+                        BoxConstraints(minWidth: isSmallScreen ? 160 : 260),
+                    decoration: BoxDecoration(
+                      color: _tabController.index == 1
+                          ? Colors.purple.withOpacity(0.1)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
                         color: _tabController.index == 1
                             ? Colors.purple
-                            : Theme.of(context)
-                                .textTheme
-                                .bodyLarge
-                                ?.color
-                                ?.withOpacity(0.7),
+                            : Colors.transparent,
+                        width: 1,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Vendors',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.store_rounded,
+                          size: 20,
                           color: _tabController.index == 1
                               ? Colors.purple
                               : Theme.of(context)
@@ -169,20 +163,35 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                                   ?.color
                                   ?.withOpacity(0.7),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        Text(
+                          'Vendors',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: _tabController.index == 1
+                                ? Colors.purple
+                                : Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.color
+                                    ?.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+              ],
+            ),
+          ),
+          body: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildUsersView(_adminService.getCustomers(), isSmallScreen),
+              _buildUsersView(_adminService.getVendors(), isSmallScreen),
             ],
           ),
-        ),
-        body: TabBarView(
-          controller: _tabController,
-          children: [
-            _buildUsersView(_adminService.getCustomers(), isSmallScreen),
-            _buildUsersView(_adminService.getVendors(), isSmallScreen),
-          ],
         ),
       ),
     );
@@ -256,7 +265,9 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
                 padding: EdgeInsets.all(isSmallScreen ? 8 : 16),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: _calculateCrossAxisCount(
-                      MediaQuery.of(context).size.width),
+                    MediaQuery.of(context).size.width * 
+                    (selectedUserId != null && !isSmallScreen && !isVendorTab ? 0.6 : 1.0)
+                  ),
                   childAspectRatio: isSmallScreen ? 0.8 : 0.8,
                   crossAxisSpacing: isSmallScreen ? 8 : 16,
                   mainAxisSpacing: isSmallScreen ? 8 : 16,
@@ -304,6 +315,12 @@ class _ManageUsersScreenState extends State<ManageUsersScreen>
   }
 
   int _calculateCrossAxisCount(double width) {
+    if (selectedUserId != null && width > 600) {
+      if (width <= 900) return 2;
+      if (width <= 1200) return 3;
+      return 4;
+    }
+    
     if (width <= 600) return 2;
     if (width <= 900) return 3;
     if (width <= 1200) return 4;
